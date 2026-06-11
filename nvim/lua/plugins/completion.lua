@@ -15,11 +15,18 @@ return {
       -- open. "super-tab" makes Tab both accept and jump snippet placeholders.
       keymap = {
         preset = "super-tab",
+        -- Navigate the popup (insert mode only):
+        --   Tab / S-Tab  OR  Up / Down  OR  Ctrl-n / Ctrl-p
+        -- Enter = accept · Ctrl-e = close · Ctrl-Space = force open
+        ["<Tab>"] = { "select_next", "snippet_forward", "fallback" },
+        ["<S-Tab>"] = { "select_prev", "snippet_backward", "fallback" },
+        ["<Up>"] = { "select_prev", "fallback" },
+        ["<Down>"] = { "select_next", "fallback" },
+        ["<C-n>"] = { "select_next", "fallback" },
+        ["<C-p>"] = { "select_prev", "fallback" },
         ["<C-Space>"] = { "show", "show_documentation", "hide_documentation" },
         ["<C-e>"] = { "hide" },
         ["<CR>"] = { "accept", "fallback" },
-        ["<C-n>"] = { "select_next", "fallback" },
-        ["<C-p>"] = { "select_prev", "fallback" },
         ["<C-d>"] = { "scroll_documentation_down", "fallback" },
         ["<C-u>"] = { "scroll_documentation_up", "fallback" },
       },

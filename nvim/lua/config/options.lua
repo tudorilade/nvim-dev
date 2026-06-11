@@ -59,7 +59,19 @@ opt.confirm = true             -- ask to save instead of failing :q
 
 -- == Editing quality of life =============================================
 opt.mouse = "a"                -- mouse works if you want it, but you won't need it
-opt.clipboard = "unnamedplus"  -- use the system clipboard for y/p
+-- System clipboard only when a provider exists (avoids "clipboard not provided"
+-- warnings on headless SSH servers without xclip/xsel).
+local function clipboard_available()
+  if vim.g.clipboard then return true end
+  if vim.fn.has("clipboard") ~= 1 then return false end
+  return vim.fn.executable("xclip") == 1
+    or vim.fn.executable("xsel") == 1
+    or vim.fn.executable("pbcopy") == 1
+    or vim.fn.executable("clip") == 1
+end
+if clipboard_available() then
+  opt.clipboard = "unnamedplus"
+end
 opt.completeopt = "menu,menuone,noselect"
 opt.inccommand = "split"       -- live preview of :substitute
 opt.virtualedit = "block"      -- let the cursor go anywhere in visual block

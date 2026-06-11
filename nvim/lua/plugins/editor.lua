@@ -2,20 +2,26 @@
 -- jumps, surround, comments, autopairs, and handy text objects.
 
 return {
-  -- == Multiple cursors (VS Code Ctrl-D / Ctrl-N style) ===================
+  -- == Multiple cursors (VS Code Ctrl-D style, remapped to avoid conflicts) ==
+  -- <leader>n = next match (NOT Ctrl-n — that breaks on headless servers / blink).
   {
     "mg979/vim-visual-multi",
     branch = "master",
-    event = "VeryLazy",
+    keys = {
+      { "<leader>n", mode = { "n", "x" }, desc = "Multi-cursor: next match" },
+      { "<leader>u", mode = { "n", "x" }, desc = "Multi-cursor: skip match" },
+      { "<C-Down>", mode = { "n", "x" }, desc = "Multi-cursor: add cursor down" },
+      { "<C-Up>", mode = { "n", "x" }, desc = "Multi-cursor: add cursor up" },
+    },
     init = function()
       vim.g.VM_maps = {
-        ["Find Under"] = "<C-n>",          -- select word, then next match
-        ["Find Subword Under"] = "<C-n>",
-        ["Add Cursor Down"] = "<C-Down>",  -- vertical cursors
+        ["Find Under"] = "<leader>n",
+        ["Find Subword Under"] = "<leader>n",
+        ["Add Cursor Down"] = "<C-Down>",
         ["Add Cursor Up"] = "<C-Up>",
-        ["Select All"] = "<leader>A",      -- select all occurrences
-        ["Skip Region"] = "<C-x>",         -- skip this match, go to next
-        ["Remove Region"] = "<C-p>",       -- remove last cursor
+        ["Select All"] = "<leader>A",
+        ["Skip Region"] = "<leader>u",
+        ["Remove Region"] = "<leader>p",
       }
       vim.g.VM_theme = "ocean"
       vim.g.VM_set_statusline = 0
