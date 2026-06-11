@@ -2,24 +2,24 @@
 -- jumps, surround, comments, autopairs, and handy text objects.
 
 return {
-  -- == Multiple cursors (VS Code Ctrl-D style, remapped to avoid conflicts) ==
-  -- <leader>n = next match (NOT Ctrl-n — that breaks on headless servers / blink).
+  -- == Multiple cursors (VS Code Ctrl-D style) ============================
+  -- Ctrl-d = add next matching word (like VS Code "Add Selection To Next Find Match")
   {
     "mg979/vim-visual-multi",
     branch = "master",
     keys = {
-      { "<leader>n", mode = { "n", "x" }, desc = "Multi-cursor: next match" },
-      { "<leader>u", mode = { "n", "x" }, desc = "Multi-cursor: skip match" },
+      { "<C-d>", mode = { "n", "x" }, desc = "Multi-cursor: next match (VS Code Ctrl-D)" },
+      { "<C-S-d>", mode = { "n", "x" }, desc = "Multi-cursor: select all matches" },
       { "<C-Down>", mode = { "n", "x" }, desc = "Multi-cursor: add cursor down" },
       { "<C-Up>", mode = { "n", "x" }, desc = "Multi-cursor: add cursor up" },
     },
     init = function()
       vim.g.VM_maps = {
-        ["Find Under"] = "<leader>n",
-        ["Find Subword Under"] = "<leader>n",
+        ["Find Under"] = "<C-d>",
+        ["Find Subword Under"] = "<C-d>",
         ["Add Cursor Down"] = "<C-Down>",
         ["Add Cursor Up"] = "<C-Up>",
-        ["Select All"] = "<leader>A",
+        ["Select All"] = "<C-S-d>",
         ["Skip Region"] = "<leader>u",
         ["Remove Region"] = "<leader>p",
       }

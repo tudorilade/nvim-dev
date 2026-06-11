@@ -66,8 +66,9 @@ map("n", "g%", "]M", opts("End of current block"))
 map("n", "[b", "[m", opts("Start of current block"))
 map("n", "]b", "]M", opts("End of current block"))
 
--- == Keep cursor centered on big jumps and searches ======================
-map("n", "<C-d>", "<C-d>zz", opts("Half page down (centered)"))
+-- == Half-page scroll (centered) =========================================
+-- Ctrl-d = multi-cursor (VS Code) in editor.lua — do not use for scrolling.
+map("n", "<C-f>", "<C-d>zz", opts("Half page down (centered)"))
 map("n", "<C-u>", "<C-u>zz", opts("Half page up (centered)"))
 map("n", "n", "nzzzv", opts("Next search result (centered)"))
 map("n", "N", "Nzzzv", opts("Prev search result (centered)"))
