@@ -49,9 +49,22 @@ map("n", "<S-Tab>", "<cmd>bprevious<cr>", opts("Previous buffer"))
 map("n", "<leader>bd", "<cmd>bdelete<cr>", opts("Delete buffer"))
 map("n", "<leader>bb", "<cmd>e #<cr>", opts("Switch to other buffer"))
 
--- == Better up/down on wrapped lines =====================================
-map({ "n", "x" }, "j", "v:count == 0 ? 'gj' : 'j'", { expr = true, silent = true })
-map({ "n", "x" }, "k", "v:count == 0 ? 'gk' : 'k'", { expr = true, silent = true })
+-- == Up/down: always land at first non-blank of the line (^) ==============
+-- Standard "browse code" maps: j/k move by line, not by column.
+-- opt.wrap is off in options.lua, so plain j^/k^ is enough (no gj needed).
+map("n", "j", "j^", opts("Down (start of line)"))
+map("n", "k", "k^", opts("Up (start of line)"))
+map({ "x", "o" }, "j", "j", opts("Down"))
+map({ "x", "o" }, "k", "k", opts("Up"))
+
+-- == Block / scope navigation (pairs with % for brackets) ================
+-- %     jump between matching (), [], {}
+-- g%    end of current block/scope (]M) — "where this block closes"
+-- [b    start of current block/scope ([m)
+-- Also (treesitter, in code files): [f ]f function  |  [c ]c class
+map("n", "g%", "]M", opts("End of current block"))
+map("n", "[b", "[m", opts("Start of current block"))
+map("n", "]b", "]M", opts("End of current block"))
 
 -- == Keep cursor centered on big jumps and searches ======================
 map("n", "<C-d>", "<C-d>zz", opts("Half page down (centered)"))
