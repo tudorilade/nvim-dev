@@ -41,7 +41,7 @@ install_deps() {
   case "$PKG_MGR" in
     apt)
       pkgs=(git curl wget unzip tar ripgrep fd-find build-essential
-            python3 python3-pip python3-venv nodejs npm xclip)
+            python3 python3-pip python3-venv nodejs npm xclip tree-sitter)
       ;;
     dnf)
       pkgs=(git curl wget unzip tar ripgrep fd-find gcc gcc-c++ make
@@ -56,7 +56,7 @@ install_deps() {
             python3 python3-pip nodejs npm xclip)
       ;;
     brew)
-      pkgs=(git curl wget unzip ripgrep fd make node python)
+      pkgs=(git curl wget unzip ripgrep fd make node python tree-sitter)
       ;;
   esac
 

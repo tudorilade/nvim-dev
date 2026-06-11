@@ -45,6 +45,9 @@ return {
         documentation = {
           auto_show = true,
           auto_show_delay_ms = 200,
+          -- Neovim 0.12 + incomplete parsers can crash on TS highlight when
+          -- Up/Down changes the selected item (shows as treesitter.lua:196).
+          treesitter_highlighting = false,
           window = { border = "rounded" },
         },
         ghost_text = { enabled = true }, -- inline preview of the top suggestion
@@ -52,7 +55,10 @@ return {
 
       signature = {
         enabled = true,
-        window = { border = "rounded" },
+        window = {
+          border = "rounded",
+          treesitter_highlighting = false,
+        },
       },
 
       sources = {
