@@ -1,0 +1,16 @@
+# Neovim runtime / state (never commit these)
+nvim/lazy-lock.json.bak
+*.log
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor swap/undo
+*.swp
+*.swo
+*~
+.undodir/
+
+# Local-only overrides (you can keep machine-specific tweaks here)
+nvim/lua/config/local.lua

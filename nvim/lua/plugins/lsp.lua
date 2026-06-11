@@ -1,0 +1,239 @@
+-- lsp.lua — language servers (autocomplete, go-to-definition, diagnostics)
+-- plus Mason for installing them, and conform.nvim for formatting.
+
+-- Which LSP servers to install + enable. Keys are mason-lspconfig server names.
+-- Languages requested: Python, C/C++, JS/TS + web, Rust, Lua, Bash.
+local servers = {
+  basedpyright = {                 -- Python (fast pyright fork)
+    settings = {
+      basedpyright = {
+        analysis = {
+          typeCheckingMode = "basic",
+          autoImportCompletions = true,
+          diagnosticMode = "openFilesOnly",
+        },
+      },
+    },
+  },
+  ruff = {},                        -- Python linter/formatter (via LSP)
+  clangd = {                        -- C / C++
+    cmd = { "clangd", "--background-index", "--clang-tidy", "--header-insertion=iwyu" },
+  },
+  ts_ls = {},                       -- JavaScript / TypeScript
+  html = {},
+  cssls = {},
+  jsonls = {},
+  rust_analyzer = {                 -- Rust
+    settings = {
+      ["rust-analyzer"] = {
+        cargo = { allFeatures = true },
+        checkOnSave = { command = "clippy" },
+      },
+    },
+  },
+  lua_ls = {                        -- Lua (configured for Neovim dev)
+    settings = {
+      Lua = {
+        runtime = { version = "LuaJIT" },
+        diagnostics = { globals = { "vim" } },
+        workspace = {
+          library = vim.api.nvim_get_runtime_file("", true),
+          checkThirdParty = false,
+        },
+        telemetry = { enable = false },
+        hint = { enable = true },
+      },
+    },
+  },
+  bashls = {},                      -- Bash / shell
+}
+
+-- Extra tools (formatters/linters) installed via Mason but not LSP servers.
+local extra_tools = {
+  "stylua",        -- Lua formatter
+  "prettier",      -- JS/TS/HTML/CSS/JSON/Markdown formatter
+  "clang-format",  -- C/C++ formatter
+  "shfmt",         -- shell formatter
+  "black",         -- Python formatter (fallback if ruff disabled)
+}
+
+return {
+  -- == Mason: installer for LSP servers, formatters, linters ==============
+  {
+    "williamboman/mason.nvim",
+    build = ":MasonUpdate",
+    opts = {
+      ui = { border = "rounded", icons = {
+        package_installed = "✓", package_pending = "➜", package_uninstalled = "✗",
+      } },
+    },
+  },
+
+  -- == LSP configuration ==================================================
+  {
+    "neovim/nvim-lspconfig",
+    event = { "BufReadPre", "BufNewFile" },
+    dependencies = {
+      { "williamboman/mason-lspconfig.nvim" },
+      { "WhoIsSethDaniel/mason-tool-installer.nvim" },
+      { "saghen/blink.cmp" }, -- for completion capabilities
+      { "j-hui/fidget.nvim", opts = {} }, -- LSP progress UI (bottom right)
+    },
+    config = function()
+      -- Capabilities advertise completion support to servers (from blink.cmp).
+      local capabilities = vim.lsp.protocol.make_client_capabilities()
+      local ok_blink, blink = pcall(require, "blink.cmp")
+      if ok_blink then
+        capabilities = blink.get_lsp_capabilities(capabilities)
+      end
+
+      -- Neovim 0.11+ native LSP config. Apply capabilities to ALL servers,
+      -- then layer each server's specific overrides on top. mason-lspconfig
+      -- (v2) then auto-enables every installed server via vim.lsp.enable.
+      vim.lsp.config("*", { capabilities = capabilities })
+      for name, cfg in pairs(servers) do
+        if next(cfg) ~= nil then
+          vim.lsp.config(name, cfg)
+        end
+      end
+
+      -- Per-buffer keymaps, set only once an LSP attaches to the buffer.
+      vim.api.nvim_create_autocmd("LspAttach", {
+        group = vim.api.nvim_create_augroup("nvimdev_lsp_attach", { clear = true }),
+        callback = function(event)
+          local function lmap(keys, fn, desc, mode)
+            mode = mode or "n"
+            vim.keymap.set(mode, keys, fn, { buffer = event.buf, desc = "LSP: " .. desc, silent = true })
+          end
+
+          -- Navigation. gd opens the file (if elsewhere) and adds a jumplist
+          -- entry, so Ctrl-o / Alt-Left jumps back exactly like VS Code.
+          lmap("gd", function() require("telescope.builtin").lsp_definitions({ reuse_win = true }) end, "Go to definition")
+          lmap("gD", vim.lsp.buf.declaration, "Go to declaration")
+          lmap("gr", function() require("telescope.builtin").lsp_references() end, "References")
+          lmap("gi", function() require("telescope.builtin").lsp_implementations({ reuse_win = true }) end, "Go to implementation")
+          lmap("gy", function() require("telescope.builtin").lsp_type_definitions({ reuse_win = true }) end, "Type definition")
+
+          -- Docs and help.
+          lmap("K", vim.lsp.buf.hover, "Hover documentation")
+          lmap("<C-k>", vim.lsp.buf.signature_help, "Signature help", "i")
+          lmap("gK", vim.lsp.buf.signature_help, "Signature help")
+
+          -- Refactor.
+          lmap("<leader>rn", vim.lsp.buf.rename, "Rename symbol")
+          lmap("<leader>ca", vim.lsp.buf.code_action, "Code action", { "n", "x" })
+
+          -- Symbols.
+          lmap("<leader>fs", function() require("telescope.builtin").lsp_document_symbols() end, "Document symbols")
+          lmap("<leader>fS", function() require("telescope.builtin").lsp_dynamic_workspace_symbols() end, "Workspace symbols")
+
+          -- Diagnostics.
+          lmap("<leader>cd", vim.diagnostic.open_float, "Line diagnostics")
+          lmap("]d", function() vim.diagnostic.jump({ count = 1, float = true }) end, "Next diagnostic")
+          lmap("[d", function() vim.diagnostic.jump({ count = -1, float = true }) end, "Prev diagnostic")
+
+          -- Inlay hints toggle (type hints inline), if the server supports it.
+          local client = vim.lsp.get_client_by_id(event.data.client_id)
+          if client and client.supports_method and client.supports_method("textDocument/inlayHint") then
+            lmap("<leader>th", function()
+              local enabled = vim.lsp.inlay_hint.is_enabled({ bufnr = event.buf })
+              vim.lsp.inlay_hint.enable(not enabled, { bufnr = event.buf })
+            end, "Toggle inlay hints")
+          end
+
+          -- Highlight references of the symbol under the cursor.
+          if client and client.supports_method and client.supports_method("textDocument/documentHighlight") then
+            local hl_group = vim.api.nvim_create_augroup("nvimdev_lsp_highlight", { clear = false })
+            vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
+              buffer = event.buf, group = hl_group, callback = vim.lsp.buf.document_highlight,
+            })
+            vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
+              buffer = event.buf, group = hl_group, callback = vim.lsp.buf.clear_references,
+            })
+          end
+        end,
+      })
+
+      -- mason-lspconfig (v2): install the servers and auto-enable them using
+      -- the native vim.lsp.enable mechanism (automatic_enable defaults to true).
+      require("mason-lspconfig").setup({
+        ensure_installed = vim.tbl_keys(servers),
+        automatic_enable = true,
+      })
+
+      -- Install the non-LSP tools (formatters) via Mason too.
+      require("mason-tool-installer").setup({
+        ensure_installed = extra_tools,
+        auto_update = false,
+        run_on_start = false, -- we trigger explicitly with :MasonInstallAll
+      })
+
+      -- A single command the setup.sh bootstrap calls to install everything.
+      vim.api.nvim_create_user_command("MasonInstallAll", function()
+        vim.cmd("MasonToolsInstall")
+        local registry = require("mason-registry")
+        for _, name in ipairs(extra_tools) do
+          local ok, pkg = pcall(registry.get_package, name)
+          if ok and not pkg:is_installed() then pkg:install() end
+        end
+      end, { desc = "Install all configured LSP servers + tools" })
+    end,
+  },
+
+  -- == Formatting: conform.nvim (format on save) =========================
+  {
+    "stevearc/conform.nvim",
+    event = { "BufWritePre" },
+    cmd = { "ConformInfo" },
+    keys = {
+      {
+        "<leader>cf",
+        function() require("conform").format({ async = true, lsp_format = "fallback" }) end,
+        mode = { "n", "v" },
+        desc = "Format buffer",
+      },
+    },
+    opts = {
+      formatters_by_ft = {
+        lua = { "stylua" },
+        python = { "ruff_format", "black" }, -- ruff first, black fallback
+        javascript = { "prettier" },
+        javascriptreact = { "prettier" },
+        typescript = { "prettier" },
+        typescriptreact = { "prettier" },
+        json = { "prettier" },
+        jsonc = { "prettier" },
+        html = { "prettier" },
+        css = { "prettier" },
+        scss = { "prettier" },
+        markdown = { "prettier" },
+        yaml = { "prettier" },
+        c = { "clang-format" },
+        cpp = { "clang-format" },
+        sh = { "shfmt" },
+        bash = { "shfmt" },
+      },
+      format_on_save = function(bufnr)
+        -- Allow disabling via :FormatDisable (buffer or global).
+        if vim.g.disable_autoformat or vim.b[bufnr].disable_autoformat then
+          return
+        end
+        return { timeout_ms = 1500, lsp_format = "fallback" }
+      end,
+      formatters = {
+        shfmt = { prepend_args = { "-i", "2", "-ci" } },
+      },
+    },
+    init = function()
+      vim.o.formatexpr = "v:lua.require'conform'.formatexpr()"
+      -- Toggle commands for format-on-save.
+      vim.api.nvim_create_user_command("FormatDisable", function(args)
+        if args.bang then vim.b.disable_autoformat = true else vim.g.disable_autoformat = true end
+      end, { desc = "Disable autoformat-on-save", bang = true })
+      vim.api.nvim_create_user_command("FormatEnable", function()
+        vim.b.disable_autoformat = false
+        vim.g.disable_autoformat = false
+      end, { desc = "Re-enable autoformat-on-save" })
+    end,
+  },
+}

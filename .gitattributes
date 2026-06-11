@@ -1,0 +1,18 @@
+# Force LF for everything that runs on Unix, regardless of host OS.
+* text=auto eol=lf
+
+*.sh        text eol=lf
+*.lua       text eol=lf
+*.md        text eol=lf
+*.json      text eol=lf
+*.py        text eol=lf
+*.cpp       text eol=lf
+*.js        text eol=lf
+
+# Windows-only script keeps CRLF
+*.ps1       text eol=crlf
+
+# Binary safety
+*.png       binary
+*.jpg       binary
+*.gif       binary
