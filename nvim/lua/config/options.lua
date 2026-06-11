@@ -59,13 +59,31 @@ opt.confirm = true             -- ask to save instead of failing :q
 
 -- == Editing quality of life =============================================
 opt.mouse = "a"                -- mouse works if you want it, but you won't need it
--- System clipboard only when a provider exists (avoids "clipboard not provided"
--- warnings on headless SSH servers without xclip/xsel).
+
+-- WSL clipboard: set provider BEFORE we decide on unnamedplus (below).
+if vim.fn.has("wsl") == 1 and vim.fn.executable("win32yank.exe") == 1 then
+  vim.g.clipboard = {
+    name = "win32yank-wsl",
+    copy = {
+      ["+"] = "win32yank.exe -i --crlf",
+      ["*"] = "win32yank.exe -i --crlf",
+    },
+    paste = {
+      ["+"] = "win32yank.exe -o --lf",
+      ["*"] = "win32yank.exe -o --lf",
+    },
+    cache_enabled = 0,
+  }
+end
+
+-- System clipboard: only when a real provider exists. Without this, yank uses
+-- the default register and you avoid "clipboard: no provider" on SSH servers.
 local function clipboard_available()
-  if vim.g.clipboard then return true end
+  if vim.g.clipboard and vim.g.clipboard.copy then return true end
   if vim.fn.has("clipboard") ~= 1 then return false end
   return vim.fn.executable("xclip") == 1
     or vim.fn.executable("xsel") == 1
+    or vim.fn.executable("wl-copy") == 1
     or vim.fn.executable("pbcopy") == 1
     or vim.fn.executable("clip") == 1
 end
@@ -93,35 +111,16 @@ end
 -- == Diagnostics appearance ==============================================
 vim.diagnostic.config({
   virtual_text = { prefix = "●", spacing = 2 },
-  signs = true,
+  signs = {
+    text = {
+      [vim.diagnostic.severity.ERROR] = "✘",
+      [vim.diagnostic.severity.WARN] = "▲",
+      [vim.diagnostic.severity.HINT] = "⚑",
+      [vim.diagnostic.severity.INFO] = "»",
+    },
+  },
   underline = true,
   update_in_insert = false,
   severity_sort = true,
   float = { border = "rounded", source = true },
 })
-
--- Nicer diagnostic sign icons in the gutter.
-local signs = { Error = "✘", Warn = "▲", Hint = "⚑", Info = "»" }
-for type, icon in pairs(signs) do
-  local hl = "DiagnosticSign" .. type
-  vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = "" })
-end
-
--- WSL clipboard: route yank/paste through Windows' clip.exe / powershell.
-if vim.fn.has("wsl") == 1 then
-  if vim.fn.executable("win32yank.exe") == 1 then
-    -- win32yank gives the best experience if installed; otherwise fall back.
-    vim.g.clipboard = {
-      name = "win32yank-wsl",
-      copy = {
-        ["+"] = "win32yank.exe -i --crlf",
-        ["*"] = "win32yank.exe -i --crlf",
-      },
-      paste = {
-        ["+"] = "win32yank.exe -o --lf",
-        ["*"] = "win32yank.exe -o --lf",
-      },
-      cache_enabled = 0,
-    }
-  end
-end

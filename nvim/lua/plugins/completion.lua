@@ -39,7 +39,8 @@ return {
         accept = { auto_brackets = { enabled = true } },
         menu = {
           border = "rounded",
-          draw = { treesitter = { "lsp" } },
+          -- Treesitter draw can error (range nil) if parser not ready on SSH/minimal setups.
+          draw = { treesitter = false },
         },
         documentation = {
           auto_show = true,
