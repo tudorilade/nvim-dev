@@ -111,7 +111,7 @@ main() {
   if have nvim; then
     if tree_sitter_version_ok 2>/dev/null; then
       log "Installing core treesitter parsers (headless)"
-      if nvim --headless "+TSInstall python lua bash vim json" +qa 2>&1 | sed 's/^/    /'; then
+      if nvim --headless "+TSInstall! vim" "+TSInstall! vimdoc" "+TSInstall python lua bash json" +qa 2>&1 | sed 's/^/    /'; then
         ok "Core treesitter parsers requested"
       else
         warn "Some parser installs failed — they install on demand when you open a file."

@@ -73,6 +73,13 @@ install_tree_sitter_release() {
 install_tree_sitter() {
   export PATH="$HOME/.local/bin:$PATH"
 
+  # Mason's tree-sitter CLI is often the wrong version and breaks parser builds.
+  local mason_ts="$HOME/.local/share/nvim/mason/bin/tree-sitter"
+  if [ -e "$mason_ts" ]; then
+    warn "Removing Mason tree-sitter (wrong version): $mason_ts"
+    rm -f "$mason_ts"
+  fi
+
   if tree_sitter_version_ok; then
     ok "tree-sitter already available ($("$(tree_sitter_bin)" --version 2>/dev/null | head -n1))"
     return 0

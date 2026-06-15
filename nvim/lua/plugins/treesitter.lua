@@ -52,6 +52,38 @@ local function ensure_parser(lang)
   pcall(require("nvim-treesitter").install, { lang })
 end
 
+local function vim_queries_ok()
+  return pcall(vim.treesitter.query.get, "vim", "highlights")
+end
+
+local function safe_ts_start(buf, lang)
+  if not lang or not parser_installed(lang) then
+    return
+  end
+  pcall(vim.treesitter.start, buf)
+end
+
+local function ensure_vim_parsers()
+  if not ts_cli_available() then
+    return
+  end
+  local need = vim.tbl_filter(function(lang)
+    return not parser_installed(lang)
+  end, { "vim", "vimdoc" })
+  if #need == 0 and vim_queries_ok() then
+    return
+  end
+  pcall(function()
+    require("nvim-treesitter").install({ "vim", "vimdoc" }):wait(120000)
+  end)
+  if not vim_queries_ok() then
+    vim.notify(
+      "vim treesitter parser still mismatched — run: nvim --headless '+TSInstall! vim' +qa",
+      vim.log.levels.WARN
+    )
+  end
+end
+
 local function setup_textobjects()
   local textobjects = require("nvim-treesitter-textobjects")
   if type(textobjects.setup) ~= "function" then
@@ -126,7 +158,7 @@ return {
           local lang = vim.treesitter.language.get_lang(ft)
           ensure_parser(lang)
 
-          pcall(vim.treesitter.start, args.buf)
+          safe_ts_start(args.buf, lang)
           if use_ts_indent(ft, lang) then
             vim.bo[args.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
           end
@@ -139,6 +171,8 @@ return {
         callback = function()
           if not ts_cli_available() then
             notify_missing_cli()
+          else
+            ensure_vim_parsers()
           end
         end,
       })

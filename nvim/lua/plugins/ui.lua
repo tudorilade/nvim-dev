@@ -151,6 +151,20 @@ return {
         lsp_doc_border = true,
       },
     },
+    config = function(_, opts)
+      -- noice cmdline highlights `:` input with vim treesitter queries.
+      -- Fall back to native cmdline if the vim parser is outdated (invalid node "tab").
+      if not pcall(vim.treesitter.query.get, "vim", "highlights") then
+        opts.cmdline = vim.tbl_extend("force", opts.cmdline or {}, { enabled = false })
+        vim.schedule(function()
+          vim.notify(
+            "Using native cmdline (vim parser mismatch). Fixed after: :TSInstall! vim",
+            vim.log.levels.WARN
+          )
+        end)
+      end
+      require("noice").setup(opts)
+    end,
   },
 
   -- == Startup dashboard ================================================
