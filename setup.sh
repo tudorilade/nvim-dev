@@ -74,15 +74,7 @@ bootstrap_nvim() {
     warn "Plugin sync reported issues (often fine on first run)."
   fi
 
-  # Mason user command is registered only after lazy loads lsp.lua.
-  if nvim --headless \
-    "+lua require('lazy').load({plugins={'mason.nvim','mason-lspconfig.nvim','mason-tool-installer.nvim'}})" \
-    "+lua vim.cmd('sleep 1')" \
-    "+MasonInstallAll" +qa 2>&1 | sed 's/^/    /'; then
-    ok "Language servers requested via Mason"
-  else
-    info "Mason tools will finish installing on first interactive launch (:MasonInstallAll)."
-  fi
+  info "Run :MasonInstallAll inside nvim once to install language servers."
 }
 
 main() {

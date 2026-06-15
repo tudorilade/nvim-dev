@@ -72,17 +72,6 @@ vim.api.nvim_create_autocmd("TermOpen", {
   end,
 })
 
--- Python: built-in block-aware indent for `o` / Enter (overrides treesitter).
-vim.api.nvim_create_autocmd("FileType", {
-  group = augroup("python_indent"),
-  pattern = "python",
-  priority = 200,
-  callback = function()
-    vim.bo.autoindent = true
-    vim.bo.indentexpr = "GetPythonIndent()"
-  end,
-})
-
 -- Language-specific indentation overrides (2 spaces for web/lua).
 vim.api.nvim_create_autocmd("FileType", {
   group = augroup("indent_overrides"),

@@ -142,6 +142,15 @@ return {
           end
         end,
       })
+
+      -- After treesitter FileType hook: restore Python's built-in indent (`o` / Enter).
+      vim.api.nvim_create_autocmd("FileType", {
+        pattern = "python",
+        callback = function()
+          vim.bo.autoindent = true
+          vim.bo.indentexpr = "GetPythonIndent()"
+        end,
+      })
     end,
     opts = {},
   },
