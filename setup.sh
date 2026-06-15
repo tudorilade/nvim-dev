@@ -84,11 +84,15 @@ main() {
   detect_os
   detect_pkg_mgr
   detect_sudo
+  detect_ubuntu
 
   log "Environment"
   info "OS:              $OS"
   info "Package manager: $PKG_MGR"
   info "Privilege:       ${SUDO:-(root/none)}"
+  if [ -n "${UBUNTU_VERSION:-}" ]; then
+    info "Ubuntu:          ${UBUNTU_VERSION} (${UBUNTU_CODENAME})"
+  fi
 
   if [ "$OS" = "unknown" ]; then
     warn "Unrecognized OS. Proceeding, but you may need to install deps manually."
@@ -101,7 +105,7 @@ main() {
     warn "--no-deps: skipping system package + Neovim install"
   fi
 
-  install_tree_sitter || warn "tree-sitter missing — parsers won't compile until it is on PATH."
+  install_tree_sitter || warn "tree-sitter unavailable — nvim works without treesitter parsers."
 
   link_config
   configure_shell
@@ -116,6 +120,8 @@ main() {
       else
         warn "Some parser installs failed — they install on demand when you open a file."
       fi
+    else
+      info "Skipping treesitter parser install (no working tree-sitter CLI on this host)."
     fi
     bootstrap_nvim
   else

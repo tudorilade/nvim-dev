@@ -1,14 +1,21 @@
 -- treesitter.lua — parsers, highlighting, indentation, and text objects.
 -- Neovim 0.12+ requires nvim-treesitter `main` (master is frozen for 0.11).
 
-local function ts_cli_available()
-  return vim.fn.executable("tree-sitter") == 1
+local function ts_cli_works()
+  if vim.fn.executable("tree-sitter") ~= 1 then
+    return false
+  end
+  local out = vim.fn.system({ "tree-sitter", "--version" })
+  if vim.v.shell_error ~= 0 then
+    return false
+  end
+  return not out:match("GLIBC") and not out:match("cannot open shared object")
 end
 
 local function notify_missing_cli()
   vim.notify(
-    "tree-sitter CLI not found — run ./setup.sh (or install tree-sitter to ~/.local/bin). "
-      .. "Syntax highlighting and parser installs are disabled until then.",
+    "tree-sitter CLI missing or incompatible (common on Ubuntu 22.04 — needs older build or cargo install). "
+      .. "Syntax highlighting via treesitter is disabled; everything else still works.",
     vim.log.levels.WARN
   )
 end
@@ -36,14 +43,14 @@ local function use_ts_indent(ft, lang)
   if native_indent[ft] then
     return false
   end
-  if not ts_cli_available() or not lang then
+  if not ts_cli_works() or not lang then
     return false
   end
   return parser_installed(lang)
 end
 
 local function ensure_parser(lang)
-  if not lang or lang == "" or not ts_cli_available() then
+  if not lang or lang == "" or not ts_cli_works() then
     return
   end
   if parser_installed(lang) then
@@ -64,24 +71,15 @@ local function safe_ts_start(buf, lang)
 end
 
 local function ensure_vim_parsers()
-  if not ts_cli_available() then
+  if not ts_cli_works() then
     return
   end
-  local need = vim.tbl_filter(function(lang)
-    return not parser_installed(lang)
-  end, { "vim", "vimdoc" })
-  if #need == 0 and vim_queries_ok() then
+  if parser_installed("vim") and parser_installed("vimdoc") and vim_queries_ok() then
     return
   end
   pcall(function()
     require("nvim-treesitter").install({ "vim", "vimdoc" }):wait(120000)
   end)
-  if not vim_queries_ok() then
-    vim.notify(
-      "vim treesitter parser still mismatched — run: nvim --headless '+TSInstall! vim' +qa",
-      vim.log.levels.WARN
-    )
-  end
 end
 
 local function setup_textobjects()
@@ -169,9 +167,9 @@ return {
         pattern = "LazyDone",
         once = true,
         callback = function()
-          if not ts_cli_available() then
+          if not ts_cli_works() then
             notify_missing_cli()
-          else
+          elseif not vim_queries_ok() then
             ensure_vim_parsers()
           end
         end,

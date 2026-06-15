@@ -56,3 +56,27 @@ detect_sudo() {
   fi
   export SUDO
 }
+
+# --- Ubuntu version (for pinning glibc-sensitive tools like tree-sitter) ----
+# Reads /etc/os-release — works without lsb_release (often missing on minimal images).
+# Exports: UBUNTU_VERSION (e.g. 22.04), UBUNTU_CODENAME (e.g. jammy), or empty if not Ubuntu.
+detect_ubuntu() {
+  UBUNTU_VERSION=""
+  UBUNTU_CODENAME=""
+  if [ -r /etc/os-release ]; then
+    # shellcheck disable=SC1091
+    . /etc/os-release
+    if [ "${ID:-}" = "ubuntu" ]; then
+      UBUNTU_VERSION="${VERSION_ID:-}"
+      UBUNTU_CODENAME="${VERSION_CODENAME:-}"
+    fi
+  fi
+  export UBUNTU_VERSION UBUNTU_CODENAME
+}
+
+ubuntu_at_least() {
+  # True when Ubuntu VERSION_ID >= argument (e.g. 24.04). False if not Ubuntu.
+  local want="$1"
+  [ -n "${UBUNTU_VERSION:-}" ] || return 1
+  awk -v have="$UBUNTU_VERSION" -v want="$want" 'BEGIN { exit !(have+0 >= want+0) }'
+}
