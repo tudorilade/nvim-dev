@@ -7,6 +7,8 @@ vim.g.maplocalleader = ","
 
 local opt = vim.opt
 
+vim.cmd("filetype plugin indent on")
+
 -- == Line numbers (hybrid) ===============================================
 -- Absolute number on the current line + relative numbers above/below so that
 -- motions like 10j / 8k are trivial to count.

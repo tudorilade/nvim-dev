@@ -1,30 +1,25 @@
 #!/usr/bin/env bash
-# tree-sitter.sh — ensure tree-sitter CLI (>= 0.26.1) is on PATH.
+# tree-sitter.sh — ensure tree-sitter CLI is on PATH.
 # nvim-treesitter main compiles parsers locally and requires this binary.
-# Falls back to a GitHub release download into ~/.local/bin (no root needed).
 
-TS_MIN_MAJOR=0
-TS_MIN_MINOR=26
-TS_MIN_PATCH=1
-
-tree_sitter_version_ok() {
-  have tree-sitter || return 1
-  local v major minor patch
-  v="$(tree-sitter --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1)"
-  [ -z "$v" ] && return 1
-  major="${v%%.*}"
-  minor="$(echo "$v" | cut -d. -f2)"
-  patch="$(echo "$v" | cut -d. -f3)"
-  if [ "$major" -gt "$TS_MIN_MAJOR" ]; then return 0; fi
-  if [ "$major" -eq "$TS_MIN_MAJOR" ] && [ "$minor" -gt "$TS_MIN_MINOR" ]; then return 0; fi
-  if [ "$major" -eq "$TS_MIN_MAJOR" ] && [ "$minor" -eq "$TS_MIN_MINOR" ] && [ "${patch:-0}" -ge "$TS_MIN_PATCH" ]; then
+tree_sitter_bin() {
+  if [ -x "$HOME/.local/bin/tree-sitter" ]; then
+    printf '%s\n' "$HOME/.local/bin/tree-sitter"
     return 0
   fi
-  return 1
+  command -v tree-sitter 2>/dev/null || return 1
+}
+
+tree_sitter_version_ok() {
+  local bin
+  bin="$(tree_sitter_bin)" || return 1
+  # Binary must run; strict semver parsing fails on some release builds.
+  "$bin" --version >/dev/null 2>&1 || "$bin" version >/dev/null 2>&1 || return 1
+  return 0
 }
 
 install_tree_sitter_release() {
-  local arch asset tmp dest
+  local asset tmp dest
   dest="$HOME/.local/bin/tree-sitter"
   mkdir -p "$HOME/.local/bin"
 
@@ -53,7 +48,7 @@ install_tree_sitter_release() {
   tmp="$(mktemp)"
   log "Downloading tree-sitter CLI: $url"
   if ! curl -fsSL "$url" -o "$tmp"; then
-    err "Failed to download tree-sitter."
+    err "Failed to download tree-sitter (GitHub may be blocked — install manually)."
     rm -f "$tmp"
     return 1
   fi
@@ -65,6 +60,13 @@ install_tree_sitter_release() {
   fi
   rm -f "$tmp"
   chmod +x "$dest"
+
+  if ! file "$dest" 2>/dev/null | grep -qE 'ELF|Mach-O'; then
+    err "Downloaded file is not a valid binary (proxy/mirror may have returned HTML)."
+    rm -f "$dest"
+    return 1
+  fi
+
   ok "Installed tree-sitter to $dest"
 }
 
@@ -72,14 +74,12 @@ install_tree_sitter() {
   export PATH="$HOME/.local/bin:$PATH"
 
   if tree_sitter_version_ok; then
-    ok "tree-sitter already available ($(tree-sitter --version 2>/dev/null | head -n1))"
+    ok "tree-sitter already available ($("$(tree_sitter_bin)" --version 2>/dev/null | head -n1))"
     return 0
   fi
 
-  # Try package manager when we have one (may be skipped with --no-deps).
   if [ "${DO_DEPS:-1}" -eq 1 ] && [ "${PKG_MGR:-none}" != "none" ]; then
     case "$PKG_MGR" in
-      apt)    ${SUDO:+$SUDO }apt-get install -y tree-sitter 2>/dev/null || true ;;
       brew)   brew install tree-sitter 2>/dev/null || true ;;
       pacman) ${SUDO:+$SUDO }pacman -S --noconfirm --needed tree-sitter 2>/dev/null || true ;;
     esac
@@ -95,9 +95,9 @@ install_tree_sitter() {
   hash -r 2>/dev/null || true
 
   if tree_sitter_version_ok; then
-    ok "tree-sitter ready ($(tree-sitter --version 2>/dev/null | head -n1))"
+    ok "tree-sitter ready ($("$(tree_sitter_bin)" --version 2>/dev/null | head -n1))"
   else
-    err "tree-sitter still missing. Parsers will not compile until it is on PATH."
+    err "tree-sitter binary installed but does not run — check Bitdefender/proxy blocking GitHub."
     return 1
   fi
 }

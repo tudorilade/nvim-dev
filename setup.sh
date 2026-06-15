@@ -33,9 +33,10 @@ source "$REPO_DIR/install/tree-sitter.sh"
 
 # --- args -----------------------------------------------------------------
 DO_DEPS=1
+export DO_DEPS
 for arg in "$@"; do
   case "$arg" in
-    --no-deps) DO_DEPS=0 ;;
+    --no-deps) DO_DEPS=0; export DO_DEPS ;;
     -h|--help)
       sed -n '3,12p' "$0" | sed 's/^# \{0,1\}//'
       exit 0
@@ -45,23 +46,42 @@ for arg in "$@"; do
 done
 
 # --- bootstrap plugins + LSP servers headlessly ---------------------------
+repair_treesitter_plugins() {
+  local lazy="$HOME/.local/share/nvim/lazy"
+  [ -d "$lazy" ] || return 0
+
+  if [ -f "$lazy/nvim-treesitter-textobjects/lua/nvim-treesitter-textobjects.lua" ] \
+     && [ ! -f "$lazy/nvim-treesitter-textobjects/lua/nvim-treesitter-textobjects/init.lua" ]; then
+    warn "Removing outdated nvim-treesitter-textobjects (master branch)"
+    rm -rf "$lazy/nvim-treesitter-textobjects"
+  fi
+
+  if [ -d "$lazy/nvim-treesitter/lua/nvim-treesitter/configs" ]; then
+    warn "Removing outdated nvim-treesitter (master branch)"
+    rm -rf "$lazy/nvim-treesitter"
+  fi
+}
+
 bootstrap_nvim() {
   log "Bootstrapping plugins and language servers (headless)"
   export PATH="$HOME/.local/bin:$PATH"
 
-  # 1) Install/sync plugins via lazy.nvim.
+  repair_treesitter_plugins
+
   if nvim --headless "+Lazy! sync" +qa 2>&1 | sed 's/^/    /'; then
     ok "Plugins synced"
   else
     warn "Plugin sync reported issues (often fine on first run)."
   fi
 
-  # 2) Pre-install the language servers / tools via Mason, if available.
-  #    MasonInstallAll is provided by our config (see plugins/lsp.lua).
-  if nvim --headless "+MasonInstallAll" +qa 2>&1 | sed 's/^/    /'; then
+  # Mason user command is registered only after lazy loads lsp.lua.
+  if nvim --headless \
+    "+lua require('lazy').load({plugins={'mason.nvim','mason-lspconfig.nvim','mason-tool-installer.nvim'}})" \
+    "+lua vim.cmd('sleep 1')" \
+    "+MasonInstallAll" +qa 2>&1 | sed 's/^/    /'; then
     ok "Language servers requested via Mason"
   else
-    info "Mason tools will finish installing on first interactive launch."
+    info "Mason tools will finish installing on first interactive launch (:MasonInstallAll)."
   fi
 }
 
@@ -89,23 +109,20 @@ main() {
     warn "--no-deps: skipping system package + Neovim install"
   fi
 
-  # Always ensure tree-sitter CLI (user-local download; needed for nvim-treesitter main).
-  install_tree_sitter || warn "tree-sitter missing — run ./setup.sh again or install manually."
+  install_tree_sitter || warn "tree-sitter missing — parsers won't compile until it is on PATH."
 
   link_config
   configure_shell
 
-  # Make sure nvim is reachable for the bootstrap step.
   export PATH="$HOME/.local/bin:$PATH"
   hash -r 2>/dev/null || true
   if have nvim; then
-    export PATH="$HOME/.local/bin:$PATH"
-    if have tree-sitter; then
-      log "Updating treesitter parsers (headless)"
-      if nvim --headless "+TSUpdate" +qa 2>&1 | sed 's/^/    /'; then
-        ok "Treesitter parsers updated"
+    if tree_sitter_version_ok 2>/dev/null; then
+      log "Installing core treesitter parsers (headless)"
+      if nvim --headless "+TSInstall python lua bash vim json" +qa 2>&1 | sed 's/^/    /'; then
+        ok "Core treesitter parsers requested"
       else
-        warn "TSUpdate reported issues (may finish on first interactive launch)."
+        warn "Some parser installs failed — they install on demand when you open a file."
       fi
     fi
     bootstrap_nvim
