@@ -51,6 +51,22 @@ return {
         end, { desc = "Lazygit terminal" })
       end
 
+      local terminal_nav = require("config.terminal_nav")
+
+      -- Terminal buffer maps (normal mode after <Esc><Esc> from terminal insert).
+      vim.api.nvim_create_autocmd("TermOpen", {
+        callback = function(event)
+          local o = { buffer = event.buf, silent = true }
+          vim.keymap.set("n", "gf", function()
+            terminal_nav.open_from_terminal(false)
+          end, vim.tbl_extend("force", o, { desc = "Go to file (close terminal)" }))
+          vim.keymap.set("n", "gF", function()
+            terminal_nav.open_from_terminal(true)
+          end, vim.tbl_extend("force", o, { desc = "Go to file:line (close terminal)" }))
+          vim.keymap.set("n", "<C-p>", "<cmd>Telescope buffers<cr>", vim.tbl_extend("force", o, { desc = "Open buffers (Ctrl+P)" }))
+        end,
+      })
+
       -- Extra terminal-mode conveniences (window nav straight from terminal).
       vim.api.nvim_create_autocmd("TermEnter", {
         callback = function()

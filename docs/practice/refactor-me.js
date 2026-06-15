@@ -36,7 +36,7 @@ const TEMP_VERBOSE = true;
 const TEMP_TRACE = true;
 
 // Badly formatted line: fix with <leader>cf (prettier)
-const config={enabled:true,retries:3,timeout:1000,name:"client"}
+const config = { enabled: true, retries: 3, timeout: 1000, name: "client" }
 
 console.log(greeting);
 console.log(colors);

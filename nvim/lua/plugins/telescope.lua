@@ -13,6 +13,9 @@ return {
       "nvim-tree/nvim-web-devicons",
     },
     keys = {
+      -- VS Code Ctrl+P — buffers open in this session (MRU order).
+      { "<C-p>", "<cmd>Telescope buffers<cr>", mode = "n", desc = "Open buffers (Ctrl+P)" },
+
       -- Files & buffers
       { "<leader>ff", "<cmd>Telescope find_files<cr>", desc = "Find files" },
       { "<leader>fa", "<cmd>Telescope find_files hidden=true no_ignore=true<cr>", desc = "Find all files (hidden)" },
@@ -88,7 +91,16 @@ return {
           },
           buffers = {
             sort_mru = true,
-            mappings = { i = { ["<C-d>"] = actions.delete_buffer } },
+            ignore_current_buffer = false,
+            show_all_buffers = true,
+            mappings = {
+              i = {
+                ["<C-d>"] = actions.delete_buffer,
+                -- Arrow keys (VS Code-style) in addition to Ctrl-j/k.
+                ["<Up>"] = actions.move_selection_previous,
+                ["<Down>"] = actions.move_selection_next,
+              },
+            },
           },
         },
         extensions = {

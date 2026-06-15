@@ -28,6 +28,8 @@ source "$REPO_DIR/install/neovim.sh"
 source "$REPO_DIR/install/link.sh"
 # shellcheck source=install/shell.sh
 source "$REPO_DIR/install/shell.sh"
+# shellcheck source=install/tree-sitter.sh
+source "$REPO_DIR/install/tree-sitter.sh"
 
 # --- args -----------------------------------------------------------------
 DO_DEPS=1
@@ -87,6 +89,9 @@ main() {
     warn "--no-deps: skipping system package + Neovim install"
   fi
 
+  # Always ensure tree-sitter CLI (user-local download; needed for nvim-treesitter main).
+  install_tree_sitter || warn "tree-sitter missing — run ./setup.sh again or install manually."
+
   link_config
   configure_shell
 
@@ -94,6 +99,15 @@ main() {
   export PATH="$HOME/.local/bin:$PATH"
   hash -r 2>/dev/null || true
   if have nvim; then
+    export PATH="$HOME/.local/bin:$PATH"
+    if have tree-sitter; then
+      log "Updating treesitter parsers (headless)"
+      if nvim --headless "+TSUpdate" +qa 2>&1 | sed 's/^/    /'; then
+        ok "Treesitter parsers updated"
+      else
+        warn "TSUpdate reported issues (may finish on first interactive launch)."
+      fi
+    fi
     bootstrap_nvim
   else
     err "nvim not found on PATH; skipping bootstrap. Re-run after fixing PATH."

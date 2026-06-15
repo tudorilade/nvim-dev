@@ -1,12 +1,31 @@
 -- treesitter.lua — parsers, highlighting, indentation, and text objects.
 -- Neovim 0.12+ requires nvim-treesitter `main` (master is frozen for 0.11).
 
-local parsers = {
-  "c", "cpp", "python", "rust", "lua", "luadoc", "bash",
-  "javascript", "typescript", "tsx", "html", "css", "json", "jsonc",
-  "yaml", "toml", "markdown", "markdown_inline", "vim", "vimdoc",
-  "regex", "diff", "gitcommit", "gitignore", "dockerfile",
-}
+local function ts_cli_available()
+  return vim.fn.executable("tree-sitter") == 1
+end
+
+local function notify_missing_cli()
+  vim.notify(
+    "tree-sitter CLI not found — run ./setup.sh (or install tree-sitter to ~/.local/bin). "
+      .. "Syntax highlighting and parser installs are disabled until then.",
+    vim.log.levels.WARN
+  )
+end
+
+local function ensure_parser(lang)
+  if not lang or lang == "" or not ts_cli_available() then
+    return
+  end
+  local ok_cfg, cfg = pcall(require, "nvim-treesitter.config")
+  if not ok_cfg then
+    return
+  end
+  if vim.tbl_contains(cfg.get_installed(), lang) then
+    return
+  end
+  pcall(require("nvim-treesitter").install, { lang })
+end
 
 return {
   {
@@ -16,29 +35,29 @@ return {
     build = ":TSUpdate",
     cmd = { "TSUpdate", "TSInstall", "TSUninstall", "TSLog" },
     init = function()
-      -- Highlight + indent via treesitter (replaces old configs.setup options).
       vim.api.nvim_create_autocmd("FileType", {
-        callback = function()
-          pcall(vim.treesitter.start)
-          vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+        callback = function(args)
+          local ft = vim.bo[args.buf].filetype
+          if ft == "" then
+            return
+          end
+
+          local lang = vim.treesitter.language.get_lang(ft)
+          ensure_parser(lang)
+
+          pcall(vim.treesitter.start, args.buf)
+          if lang and ts_cli_available() then
+            vim.bo[args.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+          end
         end,
       })
 
-      -- Install any missing parsers after lazy finishes loading plugins.
       vim.api.nvim_create_autocmd("User", {
         pattern = "LazyDone",
         once = true,
         callback = function()
-          local ok, ts = pcall(require, "nvim-treesitter")
-          if not ok then return end
-          local ok_cfg, cfg = pcall(require, "nvim-treesitter.config")
-          if not ok_cfg then return end
-          local installed = cfg.get_installed()
-          local missing = vim.tbl_filter(function(p)
-            return not vim.tbl_contains(installed, p)
-          end, parsers)
-          if #missing > 0 then
-            ts.install(missing)
+          if not ts_cli_available() then
+            notify_missing_cli()
           end
         end,
       })
@@ -51,7 +70,16 @@ return {
     branch = "main",
     dependencies = { "nvim-treesitter/nvim-treesitter" },
     config = function()
-      require("nvim-treesitter-textobjects").setup({
+      local ok, textobjects = pcall(require, "nvim-treesitter-textobjects")
+      if not ok or type(textobjects.setup) ~= "function" then
+        vim.notify(
+          "nvim-treesitter-textobjects is outdated — run :Lazy sync (needs main branch).",
+          vim.log.levels.WARN
+        )
+        return
+      end
+
+      textobjects.setup({
         select = { lookahead = true },
         move = { set_jumps = true },
       })

@@ -23,6 +23,7 @@ class shape:
         self.sides = sides
 
     def describe(self):
+        print("describe something w")
         return self.name + " has " + str(self.sides) + " sides"
 
 
@@ -36,12 +37,12 @@ pent = shape("pentagon", 5)
 # beta
 # gamma
 
-values = [1,2,3,4,5]            # badly formatted: fix with <leader>cf (Drill 18)
-total=0
+values = [1, 2, 3, 4, 5]  # badly formatted: fix with <leader>cf (Drill 18)
+total = 0
 for v in values:
     total = total + v
 
-print( "total:" , total )
+print("total:", total)
 print(calc(2))
 print(calc_volume(2, 10))
 print(sq.describe())

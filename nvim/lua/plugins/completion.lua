@@ -11,13 +11,9 @@ return {
       "rafamadriz/friendly-snippets",
     },
     opts = {
-      -- Keymap preset: Enter to accept, Tab/S-Tab to navigate, Ctrl-Space to
-      -- open. "super-tab" makes Tab both accept and jump snippet placeholders.
+      -- Enter accepts; Tab/Up/Down navigate (VS Code-style arrow picking).
       keymap = {
-        preset = "super-tab",
-        -- Navigate the popup (insert mode only):
-        --   Tab / S-Tab  OR  Up / Down  OR  Ctrl-n / Ctrl-p
-        -- Enter = accept · Ctrl-e = close · Ctrl-Space = force open
+        preset = "enter",
         ["<Tab>"] = { "select_next", "snippet_forward", "fallback" },
         ["<S-Tab>"] = { "select_prev", "snippet_backward", "fallback" },
         ["<Up>"] = { "select_prev", "fallback" },
@@ -25,10 +21,10 @@ return {
         ["<C-n>"] = { "select_next", "fallback" },
         ["<C-p>"] = { "select_prev", "fallback" },
         ["<C-Space>"] = { "show", "show_documentation", "hide_documentation" },
-        ["<C-e>"] = { "hide" },
+        ["<C-e>"] = { "hide", "fallback" },
         ["<CR>"] = { "accept", "fallback" },
-        ["<C-d>"] = { "scroll_documentation_down", "fallback" },
-        ["<C-u>"] = { "scroll_documentation_up", "fallback" },
+        ["<C-b>"] = { "scroll_documentation_up", "fallback" },
+        ["<C-f>"] = { "scroll_documentation_down", "fallback" },
       },
 
       appearance = {
@@ -37,20 +33,27 @@ return {
 
       completion = {
         accept = { auto_brackets = { enabled = true } },
+        list = {
+          selection = {
+            preselect = true,
+            auto_insert = true,
+          },
+        },
         menu = {
           border = "rounded",
-          -- No treesitter in menu draw (avoids "range nil" on minimal/SSH setups).
+          auto_show = true,
           draw = {},
         },
         documentation = {
-          auto_show = true,
-          auto_show_delay_ms = 200,
-          -- Neovim 0.12 + incomplete parsers can crash on TS highlight when
-          -- Up/Down changes the selected item (shows as treesitter.lua:196).
+          -- Manual only (Ctrl-Space) — avoids redraw errors while Up/Down moves selection.
+          auto_show = false,
           treesitter_highlighting = false,
           window = { border = "rounded" },
         },
-        ghost_text = { enabled = true }, -- inline preview of the top suggestion
+        ghost_text = {
+          enabled = true,
+          show_with_menu = false,
+        },
       },
 
       signature = {
@@ -65,7 +68,6 @@ return {
         default = { "lsp", "path", "snippets", "buffer" },
       },
 
-      -- Rust fuzzy matcher prebuilt binary downloaded by the release version.
       fuzzy = { implementation = "prefer_rust_with_warning" },
     },
     opts_extend = { "sources.default" },

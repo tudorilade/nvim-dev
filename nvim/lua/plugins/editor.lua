@@ -84,7 +84,7 @@ return {
   {
     "windwp/nvim-autopairs",
     event = "InsertEnter",
-    opts = { check_ts = true },
+    opts = { check_ts = false },
   },
 
   -- == Better around/inside text objects (ai, ii, etc.) ==================
