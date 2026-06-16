@@ -40,6 +40,7 @@ These docs are two things at once:
 
 ### Whenever something breaks
 - [11 — Troubleshooting](11-troubleshooting.md).
+- [12 — Dependencies](12-dependencies.md) — full package, Mason, and plugin list.
 
 ## All pages
 
@@ -56,6 +57,7 @@ These docs are two things at once:
 | 09 | [Keybindings reference](09-keybindings-reference.md) | Every custom mapping |
 | 10 | [Practice drills](10-practice-drills.md) | 20 graded exercises |
 | 11 | [Troubleshooting](11-troubleshooting.md) | When things go wrong |
+| 12 | [Dependencies](12-dependencies.md) | Full deploy: apt, Mason, plugins |
 
 ## Practice files
 

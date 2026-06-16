@@ -91,6 +91,7 @@ sheet and a hands-on training course:
 - [Keybindings reference](docs/09-keybindings-reference.md)
 - [Practice drills](docs/10-practice-drills.md)
 - [Troubleshooting](docs/11-troubleshooting.md)
+- [Dependencies (full deploy)](docs/12-dependencies.md)
 
 Practice files to drill on live in [docs/practice/](docs/practice/).
 
