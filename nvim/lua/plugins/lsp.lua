@@ -161,22 +161,12 @@ return {
         automatic_enable = true,
       })
 
-      -- Install the non-LSP tools (formatters) via Mason too.
+      -- mason-tool-installer; :MasonInstallAll is registered in config/mason_cmd.lua
       require("mason-tool-installer").setup({
         ensure_installed = extra_tools,
         auto_update = false,
-        run_on_start = false, -- we trigger explicitly with :MasonInstallAll
+        run_on_start = false,
       })
-
-      -- A single command the setup.sh bootstrap calls to install everything.
-      vim.api.nvim_create_user_command("MasonInstallAll", function()
-        vim.cmd("MasonToolsInstall")
-        local registry = require("mason-registry")
-        for _, name in ipairs(extra_tools) do
-          local ok, pkg = pcall(registry.get_package, name)
-          if ok and not pkg:is_installed() then pkg:install() end
-        end
-      end, { desc = "Install all configured LSP servers + tools" })
     end,
   },
 

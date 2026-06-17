@@ -112,15 +112,25 @@ clipboard — not your laptop. The config detects SSH (`$SSH_TTY`) and uses
 **Verify after `git pull` + reopen nvim on SSH:**
 
 ```vim
-:echo g:clipboard.name    " should show "OSC 52"
-:set clipboard?           " unnamedplus
+:echo g:clipboard          " should be "osc52" (string)
+:echo $SSH_TTY             " should show a path, not empty
+:set clipboard?            " unnamedplus
 ```
 
-Yank in nvim (`y`, `yy`, visual `y`) → paste in a local app with `Ctrl+V`.
+Plain `y` / `yy` should copy to your laptop. If not, use **`gy`** in normal/visual mode
+(explicit laptop yank). Paste locally with **Ctrl+V**.
 
-**Paste from laptop into remote nvim:** use the terminal paste shortcut
-(`Ctrl+Shift+V` in most terminals) or `"+p` if OSC 52 paste works in your
-terminal.
+**If you use tmux on the server**, add to `~/.tmux.conf`:
+
+```tmux
+set -g set-clipboard on
+```
+
+**Cursor / Windows Terminal:** OSC 52 should work out of the box. If `gy` works but
+plain `y` does not, run `:echo g:clipboard` and report the value.
+
+**Paste from laptop → remote nvim:** **Ctrl+Shift+V** in the terminal (not `p` unless
+OSC 52 paste works in your terminal).
 
 ### WSL
 
@@ -140,6 +150,24 @@ chmod +x ~/.local/bin/win32yank.exe
 - Install `xclip` or `xsel` for local X clipboard, or yanks stay in nvim's `"`
   register only (on SSH, OSC 52 is used instead — see above).
 - Verify: `:checkhealth` → "Clipboard" section.
+
+## MasonInstallAll: Not an editor command
+
+`:MasonInstallAll` is registered at startup in `config/mason_cmd.lua` (no need to
+open a file first). After `git pull`, quit and reopen nvim.
+
+```vim
+:MasonInstallAll
+:Mason          " watch install progress
+```
+
+Alternatives:
+
+```vim
+:MasonToolsInstall
+```
+
+LSP servers install when `lsp.lua` loads (open any file once) or via `:Mason` UI.
 
 ## Lazygit not installed
 

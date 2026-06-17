@@ -8,9 +8,11 @@
 --   5. local    (optional, gitignored machine-specific overrides)
 
 require("config.options")
+require("config.clipboard")
 require("config.lazy")
 require("config.keymaps")
 require("config.autocmds")
+require("config.mason_cmd")
 
 -- Optional per-machine overrides (not tracked by git).
 pcall(require, "config.local")
