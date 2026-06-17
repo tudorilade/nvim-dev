@@ -91,46 +91,47 @@ Ensure `gcc`/`clang` and `make` are installed (`setup.sh` installs these).
 
 ## Clipboard doesn't work (WSL, SSH, headless)
 
-By default yanks use the system clipboard (`unnamedplus`).
-
 ### SSH from your laptop (remote nvim → local clipboard)
 
-When you SSH into a server, `xclip` on the **server** only fills the **server**
-clipboard — not your laptop. The config detects SSH (`$SSH_TTY`) and uses
-**OSC 52**: yanks are sent as an escape sequence through the terminal to your
-**local** clipboard.
+On SSH, yanks use Neovim's **OSC 52** clipboard provider (`unnamedplus` → laptop).
+Remote `xclip` is **not** used.
 
-**Requirements on your laptop terminal:**
+On nvim start you should see: `SSH clipboard: y/yy → laptop (OSC 52)`
 
-- **Windows Terminal**, **Cursor** terminal, **iTerm2**, **WezTerm**, or similar
-  (must support OSC 52 — most modern terminals do)
-- If you use **tmux** on the server, add to `~/.tmux.conf`:
-  ```tmux
-  set -g set-clipboard on
-  ```
+**Fix a corrupted terminal** (gibberish unicode in the shell after yanking):
 
-**Verify after `git pull` + reopen nvim on SSH:**
-
-```vim
-:echo g:clipboard          " should be "osc52" (string)
-:echo $SSH_TTY             " should show a path, not empty
-:set clipboard?            " unnamedplus
+```bash
+reset
 ```
 
-Plain `y` / `yy` should copy to your laptop. If not, use **`gy`** in normal/visual mode
-(explicit laptop yank). Paste locally with **Ctrl+V**.
+Or close the terminal tab and open a new SSH session.
 
-**If you use tmux on the server**, add to `~/.tmux.conf`:
+**Verify after `git pull` + full nvim restart:**
+
+```vim
+:echo $SSH_CLIENT        " not empty
+:set clipboard?          " unnamedplus
+:echo g:clipboard.name   " OSC 52
+```
+
+`yy` → **Ctrl+V** on your laptop. If plain `y` fails, try **`gy`** (explicit `"+y`).
+
+**Disable OSC 52** if your terminal cannot handle it:
+
+```bash
+export NVIM_NO_OSC52=1
+```
+
+**tmux on server** — add to `~/.tmux.conf`:
 
 ```tmux
 set -g set-clipboard on
 ```
 
-**Cursor / Windows Terminal:** OSC 52 should work out of the box. If `gy` works but
-plain `y` does not, run `:echo g:clipboard` and report the value.
+**Paste laptop → remote:** **Ctrl+Shift+V** in the terminal.
 
-**Paste from laptop → remote nvim:** **Ctrl+Shift+V** in the terminal (not `p` unless
-OSC 52 paste works in your terminal).
+**If it still fails:** your SSH terminal may block OSC 52 (PuTTY often does). Use
+**Windows Terminal** or **Cursor** integrated terminal to SSH instead.
 
 ### WSL
 
