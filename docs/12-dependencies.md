@@ -59,6 +59,7 @@ sudo apt update && sudo apt install -y \
 | **Clipboard**               | `xclip` if you want `+` register over SSH                                                                             | Same                                                             |
 | **Mason / plugins**         | Identical                                                                                                             | Identical                                                        |
 | **Python indent**           | `GetPythonIndent()` (built-in)                                                                                        | Same                                                             |
+| **lazygit**                 | GitHub binary → `~/.local/bin` (jammy has no apt package)                                                             | apt `lazygit` when available, else same binary install           |
 
 
 **22.04 — extra apt for treesitter CLI:**
@@ -91,20 +92,22 @@ tree-sitter --version   # must run without GLIBC errors
 | `nvim`        | **≥ 0.11** (config targets **0.12**) | apt or official tarball via `install/neovim.sh` | Symlinked to `~/.local/bin/nvim` when using tarball |
 | `tree-sitter` | **≥ 0.26.1** (nvim-treesitter main)  | cargo build (22.04) or GitHub release (24.04)   | Required to compile treesitter parsers              |
 | `fd`          | any recent                           | Symlink from `fdfind` on Debian/Ubuntu          | Used by Telescope `find_files`                      |
+| `lazygit`     | any recent                           | apt (24.04) or GitHub release via `install/lazygit.sh` | Git TUI — `<leader>gg`, `<leader>tg`          |
 
 
 **Avoid:** `~/.local/share/nvim/mason/bin/tree-sitter` — wrong version; setup removes it.
 
 ---
 
-## Optional system tools (not in `setup.sh`)
+## Optional system tools (if setup failed)
 
 
-| Tool                        | Purpose                                          | Install                                                                                  |
-| --------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| `lazygit`                   | `<leader>gg`, `<leader>tg` full git TUI          | `sudo apt install lazygit` or [GitHub release](https://github.com/jesseduffield/lazygit) |
-| `rustc` / `cargo`           | Rust **projects** (not just `rust-analyzer` LSP) | `sudo apt install rustc cargo`                                                           |
-| `clang` / `clangd` (system) | C++ projects if not using Mason-only             | `build-essential` + Mason `clangd`                                                       |
+| Tool                        | Purpose                                          | Install                                                          |
+| --------------------------- | ------------------------------------------------ | ---------------------------------------------------------------- |
+| `rustc` / `cargo`           | Rust **projects** (not just `rust-analyzer` LSP) | `sudo apt install rustc cargo`                                   |
+| `clang` / `clangd` (system) | C++ projects if not using Mason-only             | `build-essential` + Mason `clangd`                               |
+
+`lazygit` is installed by `./setup.sh` (apt when available, else `~/.local/bin/lazygit` from GitHub).
 
 
 ---
@@ -281,7 +284,7 @@ cd ~/nvim-dev && git pull && ./setup.sh --no-deps
 | `ripgrep`          | `:grep`, basic search                          | `<leader>fg` live grep                     |
 | `fd`               | Telescope with slower fallback                 | Fast `<leader>ff`                          |
 | `nodejs`           | Editing plain files                            | `basedpyright` / Mason pyright             |
-| `lazygit`          | `gitsigns`, terminal `git`                     | `<leader>gg`                               |
+| `lazygit`          | `gitsigns`, terminal `git`                     | `<leader>gg`, `<leader>tg`                 |
 | `:MasonInstallAll` | Editing                                        | `gd`, autocomplete, format-on-save         |
 
 

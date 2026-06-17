@@ -62,7 +62,34 @@ opt.confirm = true             -- ask to save instead of failing :q
 -- == Editing quality of life =============================================
 opt.mouse = "a"                -- mouse works if you want it, but you won't need it
 
--- WSL clipboard: set provider BEFORE we decide on unnamedplus (below).
+-- == Clipboard ============================================================
+-- Priority: WSL win32yank → SSH OSC 52 (laptop clipboard over SSH) → local xclip.
+
+local function is_ssh_session()
+  return (vim.env.SSH_TTY and vim.env.SSH_TTY ~= "")
+    or (vim.env.SSH_CONNECTION and vim.env.SSH_CONNECTION ~= "")
+end
+
+local function setup_osc52_clipboard()
+  local ok, osc52 = pcall(require, "vim.ui.clipboard.osc52")
+  if not ok then
+    return false
+  end
+  vim.g.clipboard = {
+    name = "OSC 52",
+    copy = {
+      ["+"] = osc52.copy,
+      ["*"] = osc52.copy,
+    },
+    paste = {
+      ["+"] = osc52.paste,
+      ["*"] = osc52.paste,
+    },
+  }
+  return true
+end
+
+-- WSL: Windows clipboard via win32yank.
 if vim.fn.has("wsl") == 1 and vim.fn.executable("win32yank.exe") == 1 then
   vim.g.clipboard = {
     name = "win32yank-wsl",
@@ -76,20 +103,21 @@ if vim.fn.has("wsl") == 1 and vim.fn.executable("win32yank.exe") == 1 then
     },
     cache_enabled = 0,
   }
-end
-
--- System clipboard: only when a real provider exists. Without this, yank uses
--- the default register and you avoid "clipboard: no provider" on SSH servers.
-local function clipboard_available()
-  if vim.g.clipboard and vim.g.clipboard.copy then return true end
-  if vim.fn.has("clipboard") ~= 1 then return false end
-  return vim.fn.executable("xclip") == 1
+elseif is_ssh_session() and setup_osc52_clipboard() then
+  -- SSH: yank goes to your laptop clipboard through the terminal (OSC 52).
+elseif not is_ssh_session() and vim.fn.has("clipboard") == 1 then
+  -- Local Linux/macOS: Neovim uses xclip/xsel/pbcopy when installed.
+  if vim.fn.executable("xclip") == 1
     or vim.fn.executable("xsel") == 1
     or vim.fn.executable("wl-copy") == 1
     or vim.fn.executable("pbcopy") == 1
     or vim.fn.executable("clip") == 1
+  then
+    opt.clipboard = "unnamedplus"
+  end
 end
-if clipboard_available() then
+
+if vim.g.clipboard and vim.g.clipboard.copy then
   opt.clipboard = "unnamedplus"
 end
 opt.completeopt = "menu,menuone,noselect"

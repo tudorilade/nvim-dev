@@ -89,12 +89,42 @@ A parser may be missing or failed to compile (compiling needs a C compiler).
 
 Ensure `gcc`/`clang` and `make` are installed (`setup.sh` installs these).
 
-## Clipboard doesn't work (especially on WSL)
+## Clipboard doesn't work (WSL, SSH, headless)
 
-By default yanks use the system clipboard (`unnamedplus`). On WSL this needs a
-clipboard bridge.
+By default yanks use the system clipboard (`unnamedplus`).
 
-- Best: install **win32yank** so nvim can talk to the Windows clipboard:
+### SSH from your laptop (remote nvim → local clipboard)
+
+When you SSH into a server, `xclip` on the **server** only fills the **server**
+clipboard — not your laptop. The config detects SSH (`$SSH_TTY`) and uses
+**OSC 52**: yanks are sent as an escape sequence through the terminal to your
+**local** clipboard.
+
+**Requirements on your laptop terminal:**
+
+- **Windows Terminal**, **Cursor** terminal, **iTerm2**, **WezTerm**, or similar
+  (must support OSC 52 — most modern terminals do)
+- If you use **tmux** on the server, add to `~/.tmux.conf`:
+  ```tmux
+  set -g set-clipboard on
+  ```
+
+**Verify after `git pull` + reopen nvim on SSH:**
+
+```vim
+:echo g:clipboard.name    " should show "OSC 52"
+:set clipboard?           " unnamedplus
+```
+
+Yank in nvim (`y`, `yy`, visual `y`) → paste in a local app with `Ctrl+V`.
+
+**Paste from laptop into remote nvim:** use the terminal paste shortcut
+(`Ctrl+Shift+V` in most terminals) or `"+p` if OSC 52 paste works in your
+terminal.
+
+### WSL
+
+On WSL, install **win32yank** so nvim talks to the Windows clipboard:
 
 ```bash
 curl -fsSLo /tmp/win32yank.zip https://github.com/equalsraf/win32yank/releases/latest/download/win32yank-x64.zip
@@ -104,11 +134,45 @@ chmod +x ~/.local/bin/win32yank.exe
 
   The config auto-detects `win32yank.exe` on WSL and routes the clipboard
   through it. Restart nvim.
-- Verify: `:checkhealth` → "Clipboard" section. `:echo has('clipboard')` should
-  be `1`.
-- On a headless Linux server with no clipboard tool, install `xclip` or
-  `xsel` (setup.sh installs `xclip` where available), or use `"+y` only when a
-  display is present.
+
+### Headless server (no SSH / no display)
+
+- Install `xclip` or `xsel` for local X clipboard, or yanks stay in nvim's `"`
+  register only (on SSH, OSC 52 is used instead — see above).
+- Verify: `:checkhealth` → "Clipboard" section.
+
+## Lazygit not installed
+
+`<leader>gg` and `<leader>tg` need the **lazygit binary** (not just the nvim plugin).
+
+```bash
+cd ~/nvim-dev && git pull && ./setup.sh --no-deps
+source ~/.bashrc
+lazygit --version
+```
+
+Or manual install on Ubuntu 22.04 (asset name includes version — use API or setup.sh):
+
+```bash
+cd ~/nvim-dev && ./setup.sh --no-deps
+# or:
+TAG=$(curl -fsSL https://api.github.com/repos/jesseduffield/lazygit/releases/latest \
+  | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": "//;s/".*//')
+VER=${TAG#v}
+curl -fsSL "https://github.com/jesseduffield/lazygit/releases/download/${TAG}/lazygit_${VER}_linux_x86_64.tar.gz" \
+  | tar -xz -C /tmp
+install -m 0755 /tmp/lazygit_${VER}_linux_x86_64/lazygit ~/.local/bin/lazygit
+```
+
+Keys once installed:
+
+| Key | Action |
+|-----|--------|
+| `<leader>gg` | Full lazygit UI (repo) |
+| `<leader>gf` | Lazygit focused on current file |
+| `<leader>tg` | Lazygit in float terminal |
+
+Inside lazygit: `?` for help, `q` to quit.
 
 ## `<A-Left>` / `<A-Right>` (jump back/forward) do nothing
 

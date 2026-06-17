@@ -30,6 +30,8 @@ source "$REPO_DIR/install/link.sh"
 source "$REPO_DIR/install/shell.sh"
 # shellcheck source=install/tree-sitter.sh
 source "$REPO_DIR/install/tree-sitter.sh"
+# shellcheck source=install/lazygit.sh
+source "$REPO_DIR/install/lazygit.sh"
 
 # --- args -----------------------------------------------------------------
 DO_DEPS=1
@@ -106,6 +108,7 @@ main() {
   fi
 
   install_tree_sitter || warn "tree-sitter unavailable — nvim works without treesitter parsers."
+  install_lazygit || warn "lazygit unavailable — use gitsigns or terminal git until installed."
 
   link_config
   configure_shell
