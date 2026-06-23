@@ -77,22 +77,29 @@ Symptoms: no autocomplete, `gd`/`K` do nothing, no diagnostics.
 - Behind a proxy? Set `HTTPS_PROXY` in your shell before launching nvim.
 - See logs: `:MasonLog`.
 
-### Autocomplete menu: arrows / Enter stop working (Tab still works)
+### Autocomplete menu: arrows / Enter stop working (Tab stuck on suggestions)
 
-Symptoms: suggestions still appear, but **Up/Down** don't browse the list,
-**Enter** inserts a newline, and only **Tab** selects. Common after typing for a
-while in Python.
+Symptoms: **Up/Down** don't browse, **Enter** inserts a newline, or **Tab** only
+cycles autocomplete instead of indenting Python. Often starts fine, breaks later.
 
-**Cause:** Often (1) a **snippet placeholder** left active after accepting a
-completion — Tab still jumps placeholders but Enter/arrows don't browse the menu;
-(2) another plugin **overwrote** blink's insert keymaps mid-session; (3) Vim's
-native ins-completion (`Ctrl-n`) fighting blink.
+**Cause:** A zombie **vim.snippet** session after accepting a completion, or Tab
+was bound to `show()` the menu on every press.
 
-**Fix in config:** snippet-aware Enter/arrows, `completion_fix` repairs keymaps on
-each edit, native `complete` disabled, single Python LSP (basedpyright only).
+**Recovery (when stuck right now):**
 
-**While stuck:** press **Ctrl-e** to cancel, then **Ctrl-Space** to reopen the
-menu. If you were in a snippet, press **Tab** until placeholders are done.
+```vim
+:CmpReset
+```
+
+Or in insert mode: **Ctrl-g** then **Ctrl-e** (two separate keys).
+
+That closes the menu, stops the snippet session, and **Tab indents again**.
+
+**Normal keys:**
+- **Up/Down** + **Enter** — completion only when the popup is visible
+- **Tab** — indent; navigates the menu only if the popup is already open
+- **Ctrl-Space** — open the menu
+- **Ctrl-y** — accept when the menu is open
 
 ## Treesitter errors / no syntax highlighting
 

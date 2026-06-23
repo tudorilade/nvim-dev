@@ -85,7 +85,15 @@ return {
       local capabilities = vim.lsp.protocol.make_client_capabilities()
       local ok_blink, blink = pcall(require, "blink.cmp")
       if ok_blink then
-        capabilities = blink.get_lsp_capabilities(capabilities)
+        capabilities = blink.get_lsp_capabilities({
+          textDocument = {
+            completion = {
+              completionItem = {
+                snippetSupport = false,
+              },
+            },
+          },
+        })
       end
 
       -- Neovim 0.11+ native LSP config. Apply capabilities to ALL servers,
