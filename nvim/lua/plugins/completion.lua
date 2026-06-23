@@ -21,8 +21,9 @@ return {
         ["<C-n>"] = { "select_next", "fallback" },
         ["<C-p>"] = { "select_prev", "fallback" },
         ["<C-Space>"] = { "show", "show_documentation", "hide_documentation" },
-        ["<C-e>"] = { "hide", "fallback" },
-        ["<CR>"] = { "accept", "fallback" },
+        ["<C-e>"] = { "cancel", "hide", "fallback" },
+        ["<C-y>"] = { "select_and_accept", "fallback" },
+        ["<CR>"] = { "accept", "select_and_accept", "fallback" },
         ["<C-b>"] = { "scroll_documentation_up", "fallback" },
         ["<C-f>"] = { "scroll_documentation_down", "fallback" },
       },
@@ -36,7 +37,9 @@ return {
         list = {
           selection = {
             preselect = true,
-            auto_insert = true,
+            -- auto_insert closes the menu while ghost text remains; arrows/Enter then
+            -- stop working but Tab still does — the "works then breaks" symptom.
+            auto_insert = false,
           },
         },
         menu = {
@@ -51,8 +54,7 @@ return {
           window = { border = "rounded" },
         },
         ghost_text = {
-          enabled = true,
-          show_with_menu = false,
+          enabled = false,
         },
       },
 

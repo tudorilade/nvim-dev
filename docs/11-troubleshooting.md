@@ -77,6 +77,22 @@ Symptoms: no autocomplete, `gd`/`K` do nothing, no diagnostics.
 - Behind a proxy? Set `HTTPS_PROXY` in your shell before launching nvim.
 - See logs: `:MasonLog`.
 
+### Autocomplete menu: arrows / Enter stop working (Tab still works)
+
+Symptoms: suggestions still appear, but **Up/Down** don't browse the list,
+**Enter** inserts a newline, and only **Tab** selects. Common after typing for a
+while in Python.
+
+**Cause:** blink.cmp's `auto_insert` mode can close the popup while gray ghost
+text still looks like a suggestion — blink no longer treats completion as
+"open", so Enter/arrows fall through. `nvim-autopairs` can also steal `<CR>`.
+
+**Fix:** already in the config (`auto_insert = false`, ghost text off, autopairs
+`map_cr = false`). After `git pull`, restart nvim fully.
+
+**While editing:** if the menu feels stuck, press **Ctrl-e** to cancel completion
+and retrigger with **Ctrl-Space**. **Ctrl-y** force-accepts the highlighted item.
+
 ## Treesitter errors / no syntax highlighting
 
 A parser may be missing or failed to compile (compiling needs a C compiler).

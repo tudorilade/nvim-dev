@@ -84,7 +84,12 @@ return {
   {
     "windwp/nvim-autopairs",
     event = "InsertEnter",
-    opts = { check_ts = false },
+    dependencies = { "saghen/blink.cmp" },
+    opts = {
+      check_ts = false,
+      -- blink.cmp owns <CR> (accept + auto_brackets). map_cr steals Enter later.
+      map_cr = false,
+    },
   },
 
   -- == Better around/inside text objects (ai, ii, etc.) ==================
