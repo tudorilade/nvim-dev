@@ -6,20 +6,20 @@ return {
     "saghen/blink.cmp",
     version = "*", -- use a built release (no Rust toolchain needed)
     lazy = false,
+    priority = 1000,
     dependencies = {
-      -- Big snippet collection (Python/C++/JS/Rust/etc.) for blink to expand.
       "rafamadriz/friendly-snippets",
     },
     opts = {
-      -- Enter accepts; Tab/Up/Down navigate (VS Code-style arrow picking).
       keymap = {
         preset = "enter",
         ["<Tab>"] = { "select_next", "snippet_forward", "fallback" },
         ["<S-Tab>"] = { "select_prev", "snippet_backward", "fallback" },
-        ["<Up>"] = { "select_prev", "fallback" },
-        ["<Down>"] = { "select_next", "fallback" },
-        ["<C-n>"] = { "select_next", "fallback" },
-        ["<C-p>"] = { "select_prev", "fallback" },
+        -- "show" reopens the menu if it was dismissed while still completing.
+        ["<Up>"] = { "select_prev", "show", "fallback" },
+        ["<Down>"] = { "select_next", "show", "fallback" },
+        ["<C-n>"] = { "select_next", "show", "fallback" },
+        ["<C-p>"] = { "select_prev", "show", "fallback" },
         ["<C-Space>"] = { "show", "show_documentation", "hide_documentation" },
         ["<C-e>"] = { "cancel", "hide", "fallback" },
         ["<C-y>"] = { "select_and_accept", "fallback" },
@@ -37,8 +37,6 @@ return {
         list = {
           selection = {
             preselect = true,
-            -- auto_insert closes the menu while ghost text remains; arrows/Enter then
-            -- stop working but Tab still does — the "works then breaks" symptom.
             auto_insert = false,
           },
         },
@@ -48,7 +46,6 @@ return {
           draw = {},
         },
         documentation = {
-          -- Manual only (Ctrl-Space) — avoids redraw errors while Up/Down moves selection.
           auto_show = false,
           treesitter_highlighting = false,
           window = { border = "rounded" },
@@ -58,13 +55,8 @@ return {
         },
       },
 
-      signature = {
-        enabled = true,
-        window = {
-          border = "rounded",
-          treesitter_highlighting = false,
-        },
-      },
+      -- Off: signature float + LSP insert maps fought blink menu keymaps.
+      signature = { enabled = false },
 
       sources = {
         default = { "lsp", "path", "snippets", "buffer" },

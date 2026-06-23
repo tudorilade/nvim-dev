@@ -97,13 +97,23 @@ return {
         end
       end
 
-      -- Per-buffer keymaps, set only once an LSP attaches to the buffer.
+      -- Per-buffer keymaps and hooks — run once (Python attaches basedpyright + ruff).
       vim.api.nvim_create_autocmd("LspAttach", {
         group = vim.api.nvim_create_augroup("nvimdev_lsp_attach", { clear = true }),
         callback = function(event)
+          local buf = event.buf
+          if vim.b[buf].nvimdev_lsp_setup then
+            return
+          end
+          vim.b[buf].nvimdev_lsp_setup = true
+
           local function lmap(keys, fn, desc, mode)
             mode = mode or "n"
-            vim.keymap.set(mode, keys, fn, { buffer = event.buf, desc = "LSP: " .. desc, silent = true })
+            vim.keymap.set(mode, keys, fn, { buffer = buf, desc = "LSP: " .. desc, silent = true })
+          end
+
+          local function client_supports(client, method)
+            return client and type(client.supports_method) == "function" and client:supports_method(method)
           end
 
           -- Navigation. gd opens the file (if elsewhere) and adds a jumplist
@@ -114,9 +124,8 @@ return {
           lmap("gi", function() require("telescope.builtin").lsp_implementations({ reuse_win = true }) end, "Go to implementation")
           lmap("gy", function() require("telescope.builtin").lsp_type_definitions({ reuse_win = true }) end, "Type definition")
 
-          -- Docs and help.
+          -- Docs and help (signature: gK only — no <C-k> in insert; blink owns insert keys).
           lmap("K", vim.lsp.buf.hover, "Hover documentation")
-          lmap("<C-k>", vim.lsp.buf.signature_help, "Signature help", "i")
           lmap("gK", vim.lsp.buf.signature_help, "Signature help")
 
           -- Refactor.
@@ -132,25 +141,35 @@ return {
           lmap("]d", function() vim.diagnostic.jump({ count = 1, float = true }) end, "Next diagnostic")
           lmap("[d", function() vim.diagnostic.jump({ count = -1, float = true }) end, "Prev diagnostic")
 
-          -- Inlay hints toggle (type hints inline), if the server supports it.
-          local client = vim.lsp.get_client_by_id(event.data.client_id)
-          if client and client.supports_method and client.supports_method("textDocument/inlayHint") then
-            lmap("<leader>th", function()
-              local enabled = vim.lsp.inlay_hint.is_enabled({ bufnr = event.buf })
-              vim.lsp.inlay_hint.enable(not enabled, { bufnr = event.buf })
-            end, "Toggle inlay hints")
-          end
+          -- Inlay hints (always register; harmless if server lacks support).
+          lmap("<leader>th", function()
+            local enabled = vim.lsp.inlay_hint.is_enabled({ bufnr = buf })
+            vim.lsp.inlay_hint.enable(not enabled, { bufnr = buf })
+          end, "Toggle inlay hints")
 
-          -- Highlight references of the symbol under the cursor.
-          if client and client.supports_method and client.supports_method("textDocument/documentHighlight") then
-            local hl_group = vim.api.nvim_create_augroup("nvimdev_lsp_highlight", { clear = false })
-            vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
-              buffer = event.buf, group = hl_group, callback = vim.lsp.buf.document_highlight,
-            })
-            vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
-              buffer = event.buf, group = hl_group, callback = vim.lsp.buf.clear_references,
-            })
-          end
+          -- Highlight references once any attached server supports it (py = 2 clients).
+          vim.schedule(function()
+            if vim.b[buf].nvimdev_lsp_highlight_setup then
+              return
+            end
+            for _, c in ipairs(vim.lsp.get_clients({ bufnr = buf })) do
+              if client_supports(c, "textDocument/documentHighlight") then
+                vim.b[buf].nvimdev_lsp_highlight_setup = true
+                local hl_group = vim.api.nvim_create_augroup("nvimdev_lsp_highlight_" .. buf, { clear = true })
+                vim.api.nvim_create_autocmd({ "CursorHold", "CursorHoldI" }, {
+                  buffer = buf,
+                  group = hl_group,
+                  callback = vim.lsp.buf.document_highlight,
+                })
+                vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI" }, {
+                  buffer = buf,
+                  group = hl_group,
+                  callback = vim.lsp.buf.clear_references,
+                })
+                break
+              end
+            end
+          end)
         end,
       })
 

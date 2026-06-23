@@ -48,9 +48,9 @@ elseif use_osc52() then
   }
   opt.clipboard = "unnamedplus"
 
-  -- Explicit "+y when unnamedplus behaviour is unclear in a plugin/terminal.
-  vim.keymap.set({ "n", "v" }, "gy", '"+y', { desc = "Yank to laptop clipboard" })
-  vim.keymap.set("n", "gY", '"+Y', { desc = "Yank line to laptop clipboard" })
+  -- Laptop yank on SSH (<leader>y — not gy; gy is LSP type definition).
+  vim.keymap.set({ "n", "v" }, "<leader>y", '"+y', { desc = "Yank to laptop clipboard" })
+  vim.keymap.set("n", "<leader>Y", '"+Y', { desc = "Yank line to laptop clipboard" })
 
   vim.api.nvim_create_autocmd("VimEnter", {
     once = true,

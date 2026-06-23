@@ -83,13 +83,18 @@ return {
   -- == Autopairs: auto-close brackets/quotes =============================
   {
     "windwp/nvim-autopairs",
-    event = "InsertEnter",
+    lazy = false,
     dependencies = { "saghen/blink.cmp" },
-    opts = {
-      check_ts = false,
-      -- blink.cmp owns <CR> (accept + auto_brackets). map_cr steals Enter later.
-      map_cr = false,
-    },
+    config = function()
+      require("nvim-autopairs").setup({
+        check_ts = false,
+        map_cr = false,
+        map_bs = true,
+        disable_filetype = {
+          "TelescopePrompt", "notify", "noice", "lazy", "mason", "help", "qf",
+        },
+      })
+    end,
   },
 
   -- == Better around/inside text objects (ai, ii, etc.) ==================

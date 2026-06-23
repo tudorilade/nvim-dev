@@ -99,6 +99,9 @@ restart nvim fully.
 **While editing:** if the menu feels stuck, press **Ctrl-e** to cancel completion
 and retrigger with **Ctrl-Space**. **Ctrl-y** force-accepts the highlighted item.
 
+If `:messages` shows **`invalid key: focus`** from notify — update config (fixed:
+only `focusable = false` is valid for `nvim_win_set_config`).
+
 ## Treesitter errors / no syntax highlighting
 
 A parser may be missing or failed to compile (compiling needs a C compiler).
@@ -136,7 +139,7 @@ Or close the terminal tab and open a new SSH session.
 :echo g:clipboard.name   " OSC 52
 ```
 
-`yy` → **Ctrl+V** on your laptop. If plain `y` fails, try **`gy`** (explicit `"+y`).
+`yy` → **Ctrl+V** on your laptop. If plain `y` fails, try **`<leader>y`** (explicit `"+y`).
 
 **Disable OSC 52** if your terminal cannot handle it:
 
