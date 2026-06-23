@@ -10,7 +10,7 @@ formatting for every configured language.
 
 | Language | Server | Formatter |
 |----------|--------|-----------|
-| Python | basedpyright + ruff | ruff (→ black fallback) |
+| Python | basedpyright | ruff (→ black fallback) |
 | C / C++ | clangd | clang-format |
 | JavaScript / TypeScript | ts_ls | prettier |
 | HTML / CSS / JSON | html, cssls, jsonls | prettier |

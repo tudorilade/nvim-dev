@@ -83,24 +83,16 @@ Symptoms: suggestions still appear, but **Up/Down** don't browse the list,
 **Enter** inserts a newline, and only **Tab** selects. Common after typing for a
 while in Python.
 
-**Cause:** blink.cmp's `auto_insert` mode can close the popup while gray ghost
-text still looks like a suggestion — blink no longer treats completion as
-"open", so Enter/arrows fall through. `nvim-autopairs` can also steal `<CR>`.
+**Cause:** Often (1) a **snippet placeholder** left active after accepting a
+completion — Tab still jumps placeholders but Enter/arrows don't browse the menu;
+(2) another plugin **overwrote** blink's insert keymaps mid-session; (3) Vim's
+native ins-completion (`Ctrl-n`) fighting blink.
 
-A popup **`nvim-treesitter: skipping unsupported language: notify`** means
-treesitter tried to attach to a notification buffer and disturbed insert mode.
-The config now skips UI filetypes (`notify`, `lazy`, `mason`, …) and makes
-notify windows non-focusable.
+**Fix in config:** snippet-aware Enter/arrows, `completion_fix` repairs keymaps on
+each edit, native `complete` disabled, single Python LSP (basedpyright only).
 
-**Fix:** already in the config (`auto_insert = false`, ghost text off, autopairs
-`map_cr = false`, treesitter skip list, notify non-focusable). After `git pull`,
-restart nvim fully.
-
-**While editing:** if the menu feels stuck, press **Ctrl-e** to cancel completion
-and retrigger with **Ctrl-Space**. **Ctrl-y** force-accepts the highlighted item.
-
-If `:messages` shows **`invalid key: focus`** from notify — update config (fixed:
-only `focusable = false` is valid for `nvim_win_set_config`).
+**While stuck:** press **Ctrl-e** to cancel, then **Ctrl-Space** to reopen the
+menu. If you were in a snippet, press **Tab** until placeholders are done.
 
 ## Treesitter errors / no syntax highlighting
 

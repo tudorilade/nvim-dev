@@ -15,7 +15,7 @@ local servers = {
       },
     },
   },
-  ruff = {},                        -- Python linter/formatter (via LSP)
+  -- Ruff: format/lint via conform + Mason tools (not a second Python LSP).
   clangd = {                        -- C / C++
     cmd = { "clangd", "--background-index", "--clang-tidy", "--header-insertion=iwyu" },
   },
@@ -54,7 +54,8 @@ local extra_tools = {
   "prettier",      -- JS/TS/HTML/CSS/JSON/Markdown formatter
   "clang-format",  -- C/C++ formatter
   "shfmt",         -- shell formatter
-  "black",         -- Python formatter (fallback if ruff disabled)
+  "ruff",          -- Python linter/formatter (conform: ruff_format)
+  "black",         -- Python formatter fallback
 }
 
 return {
@@ -97,7 +98,7 @@ return {
         end
       end
 
-      -- Per-buffer keymaps and hooks — run once (Python attaches basedpyright + ruff).
+      -- Per-buffer keymaps and hooks — run once per buffer.
       vim.api.nvim_create_autocmd("LspAttach", {
         group = vim.api.nvim_create_augroup("nvimdev_lsp_attach", { clear = true }),
         callback = function(event)
@@ -205,7 +206,7 @@ return {
     opts = {
       formatters_by_ft = {
         lua = { "stylua" },
-        python = { "ruff_format", "black" }, -- ruff first, black fallback
+        python = { "ruff_format", "black" }, -- ruff via Mason tool, not ruff LSP
         javascript = { "prettier" },
         javascriptreact = { "prettier" },
         typescript = { "prettier" },
