@@ -1,168 +1,84 @@
--- completion.lua — blink.cmp autocomplete.
---
--- Rules:
---   Tab  = indent (Python) UNLESS menu is open OR a real vim.snippet session is active
---   Up/Down / Enter = completion ONLY when the menu is visible
---   Ctrl-g Ctrl-e or :CmpReset = hard reset when stuck
+-- completion.lua — nvim-cmp (replaces blink.cmp; blink's insert keymap engine kept breaking).
+-- Stays in INSERT mode (never select mode). Tab indents unless the popup is open.
 
 return {
   {
-    "saghen/blink.cmp",
-    version = "*",
+    "hrsh7th/nvim-cmp",
     lazy = false,
     priority = 1000,
-    opts = {
-      keymap = {
-        preset = "enter",
-        -- Enter preset Tab = snippet + indent fallback. We only add menu navigation.
-        ["<Tab>"] = {
-          function(cmp)
-            if vim.snippet.active() then
-              return cmp.snippet_forward()
-            end
-            if cmp.is_menu_visible() then
-              return cmp.select_next()
-            end
-            return false
-          end,
-          "fallback",
-        },
-        ["<S-Tab>"] = {
-          function(cmp)
-            if vim.snippet.active() then
-              return cmp.snippet_backward()
-            end
-            if cmp.is_menu_visible() then
-              return cmp.select_prev()
-            end
-            return false
-          end,
-          "fallback",
-        },
-        ["<Up>"] = {
-          function(cmp)
-            if cmp.is_menu_visible() then
-              return cmp.select_prev()
-            end
-            return false
-          end,
-          "fallback",
-        },
-        ["<Down>"] = {
-          function(cmp)
-            if cmp.is_menu_visible() then
-              return cmp.select_next()
-            end
-            return false
-          end,
-          "fallback",
-        },
-        ["<C-n>"] = {
-          function(cmp)
-            if cmp.is_menu_visible() then
-              return cmp.select_next()
-            end
-            return cmp.show()
-          end,
-          "fallback",
-        },
-        ["<C-p>"] = {
-          function(cmp)
-            if cmp.is_menu_visible() then
-              return cmp.select_prev()
-            end
-            return cmp.show()
-          end,
-          "fallback",
-        },
-        ["<C-Space>"] = { "show", "show_documentation", "hide_documentation" },
-        ["<C-e>"] = {
-          function()
-            require("config.completion_fix").reset()
-            return false
-          end,
-          "fallback",
-        },
-        ["<C-y>"] = {
-          function(cmp)
-            if cmp.is_menu_visible() then
-              return cmp.select_and_accept()
-            end
-            return false
-          end,
-          "fallback",
-        },
-        ["<CR>"] = {
-          function(cmp)
-            if vim.snippet.active() then
-              return cmp.snippet_forward()
-            end
-            if cmp.is_menu_visible() then
-              return cmp.accept()
-            end
-            return false
-          end,
-          "fallback",
-        },
-        ["<C-b>"] = { "scroll_documentation_up", "fallback" },
-        ["<C-f>"] = { "scroll_documentation_down", "fallback" },
-      },
-
-      appearance = {
-        nerd_font_variant = "mono",
-      },
-
-      snippets = {
-        -- blink's snippet_active() can lie after LSP accepts; trust vim.snippet only.
-        active = function()
-          return vim.snippet.active()
-        end,
-      },
-
-      completion = {
-        accept = { auto_brackets = { enabled = true } },
-        trigger = {
-          show_in_snippet = false,
-        },
-        list = {
-          selection = {
-            preselect = true,
-            auto_insert = false,
-          },
-        },
-        menu = {
-          border = "rounded",
-          auto_show = true,
-          draw = {},
-        },
-        documentation = {
-          auto_show = false,
-          treesitter_highlighting = false,
-          window = { border = "rounded" },
-        },
-        ghost_text = {
-          enabled = false,
-        },
-      },
-
-      signature = { enabled = false },
-
-      sources = {
-        default = { "lsp", "path", "buffer" },
-        transform_items = function(_, items)
-          local kind = require("blink.cmp.types").CompletionItemKind.Snippet
-          return vim.tbl_filter(function(item)
-            return item.kind ~= kind
-          end, items)
-        end,
-      },
-
-      fuzzy = { implementation = "prefer_rust_with_warning" },
+    dependencies = {
+      "hrsh7th/cmp-nvim-lsp",
+      "hrsh7th/cmp-buffer",
+      "hrsh7th/cmp-path",
+      "windwp/nvim-autopairs",
     },
-    opts_extend = { "sources.default" },
-    config = function(_, opts)
-      require("blink.cmp").setup(opts)
-      require("config.completion_fix").setup()
+    config = function()
+      require("nvim-autopairs").setup({
+        check_ts = false,
+        disable_filetype = { "TelescopePrompt", "notify", "noice", "lazy", "mason", "help", "qf" },
+      })
+
+      local cmp = require("cmp")
+      local cmp_autopairs = require("nvim-autopairs.completion.cmp")
+
+      cmp.setup({
+        snippet = {
+          expand = function() end,
+        },
+        mapping = cmp.mapping.preset.insert({
+          ["<C-Space>"] = cmp.mapping.complete(),
+          ["<C-e>"] = cmp.mapping.abort(),
+          ["<C-y>"] = cmp.mapping.confirm({ select = true }),
+          ["<CR>"] = cmp.mapping.confirm({ select = true }),
+          ["<Up>"] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Insert }),
+          ["<Down>"] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Insert }),
+          ["<C-n>"] = cmp.mapping.select_next_item({ behavior = cmp.SelectBehavior.Insert }),
+          ["<C-p>"] = cmp.mapping.select_prev_item({ behavior = cmp.SelectBehavior.Insert }),
+          ["<Tab>"] = cmp.mapping(function(fallback)
+            if cmp.visible() then
+              cmp.select_next_item({ behavior = cmp.SelectBehavior.Insert })
+            else
+              fallback()
+            end
+          end, { "i", "s" }),
+          ["<S-Tab>"] = cmp.mapping(function(fallback)
+            if cmp.visible() then
+              cmp.select_prev_item({ behavior = cmp.SelectBehavior.Insert })
+            else
+              fallback()
+            end
+          end, { "i", "s" }),
+        }),
+        sources = cmp.config.sources(
+          { { name = "nvim_lsp", priority = 1000 } },
+          { { name = "path" } },
+          { { name = "buffer" } }
+        ),
+        window = {
+          completion = cmp.config.window.bordered(),
+          documentation = cmp.config.window.bordered(),
+        },
+        formatting = {
+          fields = { "kind", "abbr", "menu" },
+        },
+        enabled = function()
+          local ft = vim.bo.filetype
+          if ft == "TelescopePrompt" or ft == "notify" or ft == "lazy" or ft == "mason" then
+            return false
+          end
+          return true
+        end,
+      })
+
+      cmp.event:on("confirm_done", cmp_autopairs.on_confirm_done())
+
+      vim.api.nvim_create_user_command("CmpReset", function()
+        cmp.abort()
+        if vim.snippet and vim.snippet.active and vim.snippet.active() then
+          vim.snippet.stop()
+        end
+        vim.notify("Completion reset", vim.log.levels.INFO)
+      end, { desc = "Abort completion popup" })
     end,
   },
 }

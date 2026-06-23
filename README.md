@@ -34,7 +34,7 @@ crucially, **documented and practiceable** in [`docs/`](docs/README.md).
   needed), `Ctrl-o` / `Alt-Left` goes back, `Ctrl-i` / `Alt-Right` forward —
   just like VS Code.
 - **IDE autocomplete** for Python, C/C++, JS/TS + web, Rust, Lua, and Bash via
-  LSP + [blink.cmp], with format-on-save.
+  LSP + [nvim-cmp], with format-on-save.
 - **Multiple cursors** (`Ctrl-n`, VS Code style) and **word swapping**
   (`cx` / `cxiw`).
 - **Integrated terminal** (`Ctrl-\`) you can scroll and search with the keyboard
@@ -145,4 +145,4 @@ gh repo create nvim-dev --public --source=. --remote=origin --push
 
 (Replace `nvim-dev` with whatever you want to call it.)
 
-[blink.cmp]: https://github.com/Saghen/blink.cmp
+[nvim-cmp]: https://github.com/hrsh7th/nvim-cmp

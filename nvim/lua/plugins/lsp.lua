@@ -77,24 +77,16 @@ return {
     dependencies = {
       { "williamboman/mason-lspconfig.nvim" },
       { "WhoIsSethDaniel/mason-tool-installer.nvim" },
-      { "saghen/blink.cmp" }, -- for completion capabilities
+      { "hrsh7th/cmp-nvim-lsp" },
       { "j-hui/fidget.nvim", opts = {} }, -- LSP progress UI (bottom right)
     },
     config = function()
-      -- Capabilities advertise completion support to servers (from blink.cmp).
       local capabilities = vim.lsp.protocol.make_client_capabilities()
-      local ok_blink, blink = pcall(require, "blink.cmp")
-      if ok_blink then
-        capabilities = blink.get_lsp_capabilities({
-          textDocument = {
-            completion = {
-              completionItem = {
-                snippetSupport = false,
-              },
-            },
-          },
-        })
+      local ok_cmp, cmp_nvim_lsp = pcall(require, "cmp_nvim_lsp")
+      if ok_cmp then
+        capabilities = vim.tbl_deep_extend("force", capabilities, cmp_nvim_lsp.default_capabilities())
       end
+      capabilities.textDocument.completion.completionItem.snippetSupport = false
 
       -- Neovim 0.11+ native LSP config. Apply capabilities to ALL servers,
       -- then layer each server's specific overrides on top. mason-lspconfig
@@ -133,7 +125,7 @@ return {
           lmap("gi", function() require("telescope.builtin").lsp_implementations({ reuse_win = true }) end, "Go to implementation")
           lmap("gy", function() require("telescope.builtin").lsp_type_definitions({ reuse_win = true }) end, "Type definition")
 
-          -- Docs and help (signature: gK only — no <C-k> in insert; blink owns insert keys).
+          -- Docs and help.
           lmap("K", vim.lsp.buf.hover, "Hover documentation")
           lmap("gK", vim.lsp.buf.signature_help, "Signature help")
 

@@ -132,7 +132,7 @@ return {
   {
     "rcarriga/nvim-notify",
     opts = {
-      -- Popups must not steal focus from insert mode (breaks blink.cmp arrows/Enter).
+      -- Popups must not steal focus from insert mode.
       on_open = function(win)
         if vim.api.nvim_win_is_valid(win) then
           vim.api.nvim_win_set_config(win, { focusable = false })

@@ -62,9 +62,7 @@ opt.confirm = true             -- ask to save instead of failing :q
 -- == Editing quality of life =============================================
 opt.mouse = "a"                -- mouse works if you want it, but you won't need it
 
-opt.completeopt = "menuone,noselect"
--- blink.cmp owns completion; native ins-completion (Ctrl-n / Ctrl-x) fights it.
-opt.complete = ""
+opt.completeopt = "menu,menuone,noselect"
 opt.inccommand = "split"       -- live preview of :substitute
 opt.virtualedit = "block"      -- let the cursor go anywhere in visual block
 opt.gdefault = false

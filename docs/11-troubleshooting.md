@@ -77,29 +77,32 @@ Symptoms: no autocomplete, `gd`/`K` do nothing, no diagnostics.
 - Behind a proxy? Set `HTTPS_PROXY` in your shell before launching nvim.
 - See logs: `:MasonLog`.
 
-### Autocomplete menu: arrows / Enter stop working (Tab stuck on suggestions)
+### Autocomplete menu: arrows / Enter / Tab broken
 
-Symptoms: **Up/Down** don't browse, **Enter** inserts a newline, or **Tab** only
-cycles autocomplete instead of indenting Python. Often starts fine, breaks later.
+**Fix:** completion uses **nvim-cmp** (not blink.cmp). After `git pull`:
 
-**Cause:** A zombie **vim.snippet** session after accepting a completion, or Tab
-was bound to `show()` the menu on every press.
-
-**Recovery (when stuck right now):**
-
-```vim
-:CmpReset
+```bash
+cd ~/nvim-dev && git pull
+# quit nvim, then:
+nvim +'Lazy sync'
 ```
 
-Or in insert mode: **Ctrl-g** then **Ctrl-e** (two separate keys).
+**Keys (insert mode, Python):**
+- Popup opens as you type
+- **Up/Down** — browse (stays in insert mode)
+- **Enter** — accept + auto-import
+- **Tab** — browse when popup is open; **indent** when it is closed
+- **Ctrl-e** — dismiss popup
+- **Ctrl-Space** — force-open popup
 
-That closes the menu, stops the snippet session, and **Tab indents again**.
+**If popup is stuck:** `:CmpReset` or **Ctrl-e**
 
-**Normal keys:**
-- **Up/Down** + **Enter** — completion only when the popup is visible
-- **Tab** — indent; navigates the menu only if the popup is already open
-- **Ctrl-Space** — open the menu
-- **Ctrl-y** — accept when the menu is open
+If problems persist after `Lazy sync`, remove old blink cache:
+
+```bash
+rm -rf ~/.local/share/nvim/lazy/blink.cmp
+nvim +'Lazy sync'
+```
 
 ## Treesitter errors / no syntax highlighting
 

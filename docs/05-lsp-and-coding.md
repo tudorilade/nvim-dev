@@ -24,7 +24,7 @@ take a few seconds to finish installing — check progress with `:Mason`.
 
 ## Autocomplete
 
-Completion (powered by [blink.cmp]) pops up as you type. It suggests method
+Completion (powered by [nvim-cmp]) pops up as you type. It suggests method
 names, variables, snippets, and file paths from the language server.
 
 | Keys | Action |
@@ -122,4 +122,4 @@ Practice with [Drills 15–18](10-practice-drills.md) using
 [`practice/practice.py`](practice/practice.py) and
 [`practice/practice.cpp`](practice/practice.cpp).
 
-[blink.cmp]: https://github.com/Saghen/blink.cmp
+[nvim-cmp]: https://github.com/hrsh7th/nvim-cmp

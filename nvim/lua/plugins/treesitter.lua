@@ -39,7 +39,6 @@ local skip_ft = {
   checkhealth = true,
   lspinfo = true,
   cmp_menu = true,
-  blink_cmp_menu = true,
   DressingInput = true,
   minifiles = true,
   gitcommit = true,

@@ -80,22 +80,7 @@ return {
     opts = { enable_autocmd = false },
   },
 
-  -- == Autopairs: auto-close brackets/quotes =============================
-  {
-    "windwp/nvim-autopairs",
-    lazy = false,
-    dependencies = { "saghen/blink.cmp" },
-    config = function()
-      require("nvim-autopairs").setup({
-        check_ts = false,
-        map_cr = false,
-        map_bs = true,
-        disable_filetype = {
-          "TelescopePrompt", "notify", "noice", "lazy", "mason", "help", "qf",
-        },
-      })
-    end,
-  },
+  -- Autopairs is configured in completion.lua (needs cmp confirm_done hook).
 
   -- == Better around/inside text objects (ai, ii, etc.) ==================
   -- Adds powerful text objects: function args, quotes, brackets via `a`/`i`.

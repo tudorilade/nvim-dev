@@ -187,7 +187,8 @@ Branch/commit pinned in `nvim/lazy-lock.json`.
 | Plugin                        | Repository                                                     | Role                                         |
 | ----------------------------- | -------------------------------------------------------------- | -------------------------------------------- |
 | lazy.nvim                     | folke/lazy.nvim                                                | Plugin manager                               |
-| blink.cmp                     | saghen/blink.cmp                                               | Autocomplete + snippets                      |
+| nvim-cmp                      | hrsh7th/nvim-cmp                                               | Autocomplete (LSP)                             |
+| cmp-nvim-lsp                  | hrsh7th/cmp-nvim-lsp                                           | LSP source for nvim-cmp                        |
 | friendly-snippets             | rafamadriz/friendly-snippets                                   | Snippet definitions                          |
 | mason.nvim                    | williamboman/mason.nvim                                        | LSP/formatter installer                      |
 | mason-lspconfig.nvim          | williamboman/mason-lspconfig.nvim                              | LSP ↔ Mason bridge                           |
