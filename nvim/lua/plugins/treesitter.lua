@@ -20,6 +20,53 @@ local function notify_missing_cli()
   )
 end
 
+-- UI / plugin buffers — never run treesitter or TSInstall on these.
+-- (notify popups were triggering "skipping unsupported language: notify" and
+-- breaking insert-mode completion keymaps.)
+local skip_ft = {
+  notify = true,
+  noice = true,
+  lazy = true,
+  mason = true,
+  alpha = true,
+  dashboard = true,
+  TelescopePrompt = true,
+  NvimTree = true,
+  ["neo-tree"] = true,
+  help = true,
+  qf = true,
+  startuptime = true,
+  checkhealth = true,
+  lspinfo = true,
+  cmp_menu = true,
+  blink_cmp_menu = true,
+  DressingInput = true,
+  minifiles = true,
+  gitcommit = true,
+  fugitive = true,
+}
+
+-- Project languages only — never call TSInstall for random plugin filetypes.
+local auto_install = {
+  python = true,
+  lua = true,
+  vim = true,
+  vimdoc = true,
+  javascript = true,
+  typescript = true,
+  tsx = true,
+  c = true,
+  cpp = true,
+  rust = true,
+  bash = true,
+  html = true,
+  css = true,
+  json = true,
+  jsonc = true,
+  markdown = true,
+  yaml = true,
+}
+
 -- Languages with reliable built-in Neovim indent — never override with treesitter.
 local native_indent = {
   python = true,
@@ -40,7 +87,7 @@ local function parser_installed(lang)
 end
 
 local function use_ts_indent(ft, lang)
-  if native_indent[ft] then
+  if native_indent[ft] or skip_ft[ft] then
     return false
   end
   if not ts_cli_works() or not lang then
@@ -50,7 +97,7 @@ local function use_ts_indent(ft, lang)
 end
 
 local function ensure_parser(lang)
-  if not lang or lang == "" or not ts_cli_works() then
+  if not lang or lang == "" or not auto_install[lang] or not ts_cli_works() then
     return
   end
   if parser_installed(lang) then
@@ -59,15 +106,24 @@ local function ensure_parser(lang)
   pcall(require("nvim-treesitter").install, { lang })
 end
 
-local function vim_queries_ok()
-  return pcall(vim.treesitter.query.get, "vim", "highlights")
-end
-
-local function safe_ts_start(buf, lang)
-  if not lang or not parser_installed(lang) then
+local function ts_start(buf, ft)
+  if skip_ft[ft] or ft == "" then
+    return
+  end
+  local lang = vim.treesitter.language.get_lang(ft)
+  if not lang then
+    return
+  end
+  -- Only attach when a parser already exists — never TSInstall notify/cmp_menu/etc.
+  local ok, added = pcall(vim.treesitter.language.add, lang)
+  if not ok or not added then
     return
   end
   pcall(vim.treesitter.start, buf)
+end
+
+local function vim_queries_ok()
+  return pcall(vim.treesitter.query.get, "vim", "highlights")
 end
 
 local function ensure_vim_parsers()
@@ -143,20 +199,19 @@ return {
     "nvim-treesitter/nvim-treesitter",
     branch = "main",
     lazy = false,
-    -- Do not `:TSUpdate` all parsers on every Lazy sync (slow + flaky on locked-down hosts).
     cmd = { "TSUpdate", "TSInstall", "TSUninstall", "TSLog" },
     init = function()
       vim.api.nvim_create_autocmd("FileType", {
         callback = function(args)
           local ft = vim.bo[args.buf].filetype
-          if ft == "" then
+          if skip_ft[ft] or ft == "" then
             return
           end
 
           local lang = vim.treesitter.language.get_lang(ft)
           ensure_parser(lang)
+          ts_start(args.buf, ft)
 
-          safe_ts_start(args.buf, lang)
           if use_ts_indent(ft, lang) then
             vim.bo[args.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
           end

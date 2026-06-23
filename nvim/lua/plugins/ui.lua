@@ -130,6 +130,16 @@ return {
 
   -- == Nicer UI for messages, cmdline, popups ===========================
   {
+    "rcarriga/nvim-notify",
+    opts = {
+      -- Popups must not steal focus from insert mode (breaks blink.cmp arrows/Enter).
+      on_open = function(win)
+        vim.api.nvim_win_set_config(win, { focusable = false, focus = false })
+      end,
+    },
+  },
+
+  {
     "folke/noice.nvim",
     event = "VeryLazy",
     dependencies = {
@@ -141,7 +151,6 @@ return {
         override = {
           ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
           ["vim.lsp.util.stylize_markdown"] = true,
-          ["cmp.entry.get_documentation"] = true,
         },
       },
       presets = {

@@ -5,7 +5,7 @@ return {
   {
     "saghen/blink.cmp",
     version = "*", -- use a built release (no Rust toolchain needed)
-    event = { "InsertEnter", "CmdlineEnter" },
+    lazy = false,
     dependencies = {
       -- Big snippet collection (Python/C++/JS/Rust/etc.) for blink to expand.
       "rafamadriz/friendly-snippets",

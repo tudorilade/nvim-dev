@@ -87,8 +87,14 @@ while in Python.
 text still looks like a suggestion — blink no longer treats completion as
 "open", so Enter/arrows fall through. `nvim-autopairs` can also steal `<CR>`.
 
+A popup **`nvim-treesitter: skipping unsupported language: notify`** means
+treesitter tried to attach to a notification buffer and disturbed insert mode.
+The config now skips UI filetypes (`notify`, `lazy`, `mason`, …) and makes
+notify windows non-focusable.
+
 **Fix:** already in the config (`auto_insert = false`, ghost text off, autopairs
-`map_cr = false`). After `git pull`, restart nvim fully.
+`map_cr = false`, treesitter skip list, notify non-focusable). After `git pull`,
+restart nvim fully.
 
 **While editing:** if the menu feels stuck, press **Ctrl-e** to cancel completion
 and retrigger with **Ctrl-Space**. **Ctrl-y** force-accepts the highlighted item.

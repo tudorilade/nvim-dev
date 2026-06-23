@@ -52,9 +52,12 @@ elseif use_osc52() then
   vim.keymap.set({ "n", "v" }, "gy", '"+y', { desc = "Yank to laptop clipboard" })
   vim.keymap.set("n", "gY", '"+Y', { desc = "Yank line to laptop clipboard" })
 
-  vim.schedule(function()
-    vim.notify("SSH clipboard: y/yy → laptop (OSC 52)", vim.log.levels.INFO)
-  end)
+  vim.api.nvim_create_autocmd("VimEnter", {
+    once = true,
+    callback = function()
+      vim.notify("SSH clipboard: y/yy → laptop (OSC 52)", vim.log.levels.INFO)
+    end,
+  })
 elseif vim.fn.has("clipboard") == 1 then
   if vim.fn.executable("xclip") == 1
     or vim.fn.executable("xsel") == 1
